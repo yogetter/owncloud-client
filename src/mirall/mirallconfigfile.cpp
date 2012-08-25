@@ -15,9 +15,15 @@
 #include "mirall/mirallconfigfile.h"
 #include "mirall/owncloudtheme.h"
 #include "mirall/miralltheme.h"
+#include "config.h"
 
 #include <QtCore>
 #include <QtGui>
+
+#ifdef WITH_QTKEYCHAIN
+#include "keychain.h"
+#include <QEventLoop>
+#endif
 
 #define DEFAULT_REMOTE_POLL_INTERVAL 30000 // default remote poll time in milliseconds
 #define DEFAULT_LOCAL_POLL_INTERVAL  10000 // default local poll time in milliseconds
@@ -148,7 +154,25 @@ void MirallConfigFile::writeOwncloudConfig( const QString& connection,
     }
 
     QByteArray pwdba = pwd.toUtf8();
-    settings.setValue( QLatin1String("passwd"), QVariant(pwdba.toBase64()) );
+#ifdef WITH_QTKEYCHAIN
+    QKeychain::WritePasswordJob passwdJob(OC_APPLICATION);
+    passwdJob.setAutoDelete(false);
+    passwdJob.setKey( "default" ); // TODO: Change when multiple account support is implemented!
+    passwdJob.setTextData(passwd);
+    QEventLoop passwdLoop;
+    passwdLoop.connect( &passwdJob, SIGNAL(finished(QKeychain::Job*)),
+        &passwdLoop,SLOT(quit()));
+    passwdJob.start();
+    passwdLoop.exec();
+    if(passwdJob.error()) {
+      // For now, default to saving the password unencrypted into a text file
+      qDebug() << "*** Warning, saving password to config file. ****";
+#endif
+      settings.setValue( QLatin1String("passwd"), QVariant(pwdba.toBase64()) );
+#ifdef WITH_QTKEYCHAIN
+    }
+#endif
+
     settings.setValue( QLatin1String("nostoredpassword"), QVariant(skipPwd) );
     settings.sync();
 
@@ -339,22 +363,39 @@ QString MirallConfigFile::ownCloudPasswd( const QString& connection ) const
         }
         pwd = _passwd;
     } else {
-        QByteArray pwdba = settings.value(QLatin1String("passwd")).toByteArray();
-        if( pwdba.isEmpty() ) {
+#ifdef WITH_QTKEYCHAIN
+        QKeychain::ReadPasswordJob passwdJob(OC_APPLICATION);
+        passwdJob.setAutoDelete(false);
+        passwdJob.setKey("default"); // TODO: Change when multiple account support is implemented!
+        QEventLoop passwdLoop;
+        passwdLoop.connect( &passwdJob, SIGNAL(finished(QKeychain::Job*)),
+            &passwdLoop,SLOT(quit()));
+        passwdJob.start();
+        passwdLoop.exec();
+        if(passwdJob.error()) {
+#endif
+          qDebug() << "*** Reading password from config file. ****";
+          QByteArray pwdba = settings.value(QLatin1String("passwd")).toByteArray();
+          if( pwdba.isEmpty() ) {
             // check the password entry, cleartext from before
             // read it and convert to base64, delete the cleartext entry.
             QString p = settings.value(QLatin1String("password")).toString();
 
             if( ! p.isEmpty() ) {
-                // its there, save base64-encoded and delete.
+              // its there, save base64-encoded and delete.
 
-                pwdba = p.toUtf8();
-                settings.setValue( QLatin1String("passwd"), QVariant(pwdba.toBase64()) );
-                settings.remove( QLatin1String("password") );
-                settings.sync();
+              pwdba = p.toUtf8();
+              settings.setValue( QLatin1String("passwd"), QVariant(pwdba.toBase64()) );
+              settings.remove( QLatin1String("password") );
+              settings.sync();
             }
+          }
+          pwd = QString::fromUtf8( QByteArray::fromBase64(pwdba) );
+#ifdef WITH_QTKEYCHAIN
+        } else {
+          pwd = passwdJob.textData();
         }
-        pwd = QString::fromUtf8( QByteArray::fromBase64(pwdba) );
+#endif
     }
 
     return pwd;

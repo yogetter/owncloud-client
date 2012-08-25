@@ -140,6 +140,9 @@ endif()
 include_directories(${CSYNC_INCLUDE_DIR}/csync ${CSYNC_INCLUDE_DIR} ${CMAKE_BINARY_DIR})
 include_directories(${3rdparty_INC})
 
+# Include QtKeyChain if found
+include_directories(${QTKEYCHAIN_INCLUDE_DIR})
+
 qt4_wrap_cpp(mirallMoc ${mirall_HEADERS})
 
 qt4_add_translation(mirall_I18N ${TRANSLATIONS})
@@ -183,6 +186,9 @@ if(NOT BUILD_OWNCLOUD_OSX_BUNDLE)
     target_link_libraries(mirall ${QT_LIBRARIES} )
     target_link_libraries(mirall mirallsync)
     target_link_libraries(mirall ${CSYNC_LIBRARY})
+    if(WITH_QTKEYCHAIN)
+      target_link_libraries(mirall ${QTKEYCHAIN_LIBRARY})
+    endif()
 
     set_target_properties( mirall PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY  ${BIN_OUTPUT_DIRECTORY} )
@@ -216,6 +222,10 @@ set_target_properties( owncloud PROPERTIES
 target_link_libraries(owncloud ${QT_LIBRARIES} )
 target_link_libraries(owncloud owncloudsync)
 target_link_libraries(owncloud ${CSYNC_LIBRARY})
+if(WITH_QTKEYCHAIN)
+  target_link_libraries(owncloud ${QTKEYCHAIN_LIBRARY})
+endif()
+
 
 install(TARGETS owncloud
         RUNTIME DESTINATION bin
