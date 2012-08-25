@@ -33,9 +33,11 @@ endif()
 
 find_package(Qt4 4.6.0 COMPONENTS QtCore QtGui QtXml QtNetwork QtTest REQUIRED )
 find_package(Csync)
+find_package(QtKeyChain)
 find_package(INotify)
 
 set(WITH_CSYNC CSYNC_FOUND)
+set(WITH_QTKEYCHAIN QTKEYCHAIN_FOUND)
 set(USE_INOTIFY ${INOTIFY_FOUND})
 
 configure_file(config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
