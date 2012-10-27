@@ -36,6 +36,7 @@
 #include "mirall/csyncfolder.h"
 #endif
 #include "mirall/inotify.h"
+#include "mirall/socketapi.h"
 
 #include <csync.h>
 
@@ -168,11 +169,15 @@ Application::Application(int &argc, char **argv) :
              this,SLOT(slotSSLFailed(QNetworkReply*, QList<QSslError>)));
 
     qDebug() << "Network Location: " << NetworkLocation::currentLocation().encoded();
+
+
+    _socketApi = new SocketApi(this, cfg.configPathWithAppName());
 }
 
 Application::~Application()
 {
     delete _tray; // needed, see ctor
+    delete _socketApi;
     qDebug() << "* Mirall shutdown";
 }
 
