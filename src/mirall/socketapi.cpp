@@ -20,6 +20,8 @@
 #include <QLocalSocket>
 #include <QMetaObject>
 #include <QStringList>
+#include <QFile>
+#include <QDir>
 
 using namespace Mirall;
 
@@ -91,4 +93,22 @@ void SocketApi::sendMessage(QLocalSocket* socket, const QString& message)
 void SocketApi::command_ONLINELINK(const QString& argument, QLocalSocket* socket)
 {
     qDebug() << "copy online link to clipboard: " << argument;
+}
+
+void SocketApi::command_RETRIEVE_STATUS(const QString& argument, QLocalSocket* socket)
+{
+    //TODO: do security checks?!
+    QDir dir(argument);
+
+    foreach(QString entry, dir.entryList())
+    {
+        sendMessage(socket, dir.absoluteFilePath(entry).prepend("needsupdate:").prepend("STATUS:"));
+    }
+
+    sendMessage(socket, "finished");
+}
+
+void SocketApi::command_PUBLICLINK(const QString& argument, QLocalSocket* socket)
+{
+
 }

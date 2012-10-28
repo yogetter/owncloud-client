@@ -40,6 +40,8 @@ private:
     void sendMessage(QLocalSocket* socket, const QString& message);
 
     Q_INVOKABLE void command_ONLINELINK(const QString& argument, QLocalSocket* socket);
+    Q_INVOKABLE void command_RETRIEVE_STATUS(const QString& argument, QLocalSocket* socket);
+    Q_INVOKABLE void command_PUBLICLINK(const QString& argument, QLocalSocket* socket);
 
 private:
     QLocalServer* _localServer;
