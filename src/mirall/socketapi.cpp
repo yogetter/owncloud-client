@@ -14,6 +14,11 @@
 
 
 #include "socketapi.h"
+#include "mirallconfigfile.h"
+#include "folderman.h"
+#include "folder.h"
+
+#include <attica/providermanager.h>
 
 #include <QDebug>
 #include <QUrl>
@@ -22,22 +27,40 @@
 #include <QStringList>
 #include <QFile>
 #include <QDir>
+#include <QMessageBox>
+#include <QClipboard>
+#include <QApplication>
 
 using namespace Mirall;
 
-SocketApi::SocketApi(QObject* parent, const QUrl& localFile)
+SocketApi::SocketApi(QObject* parent, const QUrl& localFile, FolderMan* folderMan)
     : QObject(parent)
     , _localServer(0)
+    , _folderMan(folderMan)
 {
     qDebug() << Q_FUNC_INFO << localFile.toLocalFile();
 
+    // setup socket
     _localServer = new QLocalServer(this);
     if(!_localServer->listen( "ownCloud" ))
         qDebug() << "cant start server";
     else
         qDebug() << "server started";
-
     connect(_localServer, SIGNAL(newConnection()), this, SLOT(onNewConnection()));
+
+    // setup attica
+    QString tmp(QLatin1String("http://%1ocs/providers.php"));
+
+//     QUrl providerFile(tmp.arg(MirallConfigFile().ownCloudUrl()));
+
+    QUrl providerFile("http://deploy.local/providers.xml");
+
+    _atticaManager = new Attica::ProviderManager();
+    qDebug() << Q_FUNC_INFO << "Add provider file: " << providerFile;
+    _atticaManager->addProviderFile(providerFile);
+    connect(_atticaManager, SIGNAL(providerAdded(Attica::Provider)), SLOT(onProviderAdded(Attica::Provider)));
+
+
 }
 
 SocketApi::~SocketApi()
@@ -83,6 +106,27 @@ void SocketApi::onReadyRead()
     }
 }
 
+void SocketApi::onProviderAdded(const Attica::Provider& provider)
+{
+    qDebug() << Q_FUNC_INFO << provider.name() << provider.baseUrl() << provider.isValid() << provider.isEnabled();
+    _atticaProvider = provider;
+
+    MirallConfigFile config;
+    _atticaProvider.saveCredentials(config.ownCloudUser(), config.ownCloudPasswd());
+}
+
+void SocketApi::onGotPublicShareLink(Attica::BaseJob* job)
+{
+    Attica::ItemPostJob<Attica::Link>* itemJob = static_cast<Attica::ItemPostJob<Attica::Link>*>(job);
+    QString infoText(QLatin1String("Public Share Link copied to clipboard: %1"));
+    QString publicLink = itemJob->result().url().toString();
+
+    QClipboard *clipboard = QApplication::clipboard();
+    clipboard->setText(publicLink);
+
+//     QMessageBox::information(0, "Copied", infoText.arg(itemJob->result().url().toString()));
+}
+
 void SocketApi::sendMessage(QLocalSocket* socket, const QString& message)
 {
     qDebug() << Q_FUNC_INFO << message;
@@ -90,10 +134,6 @@ void SocketApi::sendMessage(QLocalSocket* socket, const QString& message)
     socket->write(localMessage.append("\n").toUtf8());
 }
 
-void SocketApi::command_ONLINELINK(const QString& argument, QLocalSocket* socket)
-{
-    qDebug() << "copy online link to clipboard: " << argument;
-}
 
 void SocketApi::command_RETRIEVE_STATUS(const QString& argument, QLocalSocket* socket)
 {
@@ -108,7 +148,27 @@ void SocketApi::command_RETRIEVE_STATUS(const QString& argument, QLocalSocket* s
     sendMessage(socket, "finished");
 }
 
-void SocketApi::command_PUBLICLINK(const QString& argument, QLocalSocket* socket)
+void SocketApi::command_PUBLIC_SHARE_LINK(const QString& argument, QLocalSocket* socket)
 {
+    qDebug() << "copy online link to clipboard: " << argument;
 
+    if(!_atticaProvider.isEnabled())
+        return;
+
+
+    QString relativePath = argument;
+    foreach(Folder* folder, _folderMan->map().values())
+    {
+        if(argument.startsWith(folder->path()))
+        {
+            int lastChars = argument.length()-folder->path().length()-1;
+            relativePath = argument.right(lastChars);
+            break;
+        }
+    }
+    qDebug() << "relative path: " << relativePath;
+
+    Attica::ItemPostJob<Attica::Link>* job = _atticaProvider.requestPublicShareLink(relativePath);
+    connect(job, SIGNAL(finished(Attica::BaseJob*)), SLOT(onGotPublicShareLink(Attica::BaseJob*)));
+    job->start();
 }

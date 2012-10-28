@@ -141,6 +141,7 @@ endif()
 # csync is required.
 include_directories(${CSYNC_INCLUDE_DIR}/csync ${CSYNC_INCLUDE_DIR} ${CMAKE_BINARY_DIR})
 include_directories(${3rdparty_INC})
+include_directories(${LIBATTICA_INCLUDE_DIR})
 
 qt4_wrap_cpp(mirallMoc ${mirall_HEADERS})
 
@@ -185,6 +186,7 @@ if(NOT BUILD_OWNCLOUD_OSX_BUNDLE)
     target_link_libraries(mirall ${QT_LIBRARIES} )
     target_link_libraries(mirall mirallsync)
     target_link_libraries(mirall ${CSYNC_LIBRARY})
+    target_link_libraries(mirall ${LIBATTICA_LIBRARIES})
 
     set_target_properties( mirall PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY  ${BIN_OUTPUT_DIRECTORY} )
@@ -222,6 +224,7 @@ set_target_properties( ${APPLICATION_EXECUTABLE} PROPERTIES
 target_link_libraries( ${APPLICATION_EXECUTABLE} ${QT_LIBRARIES} )
 target_link_libraries( ${APPLICATION_EXECUTABLE} owncloudsync )
 target_link_libraries( ${APPLICATION_EXECUTABLE} ${CSYNC_LIBRARY} )
+target_link_libraries( ${APPLICATION_EXECUTABLE} ${LIBATTICA_LIBRARIES})
 
 install(TARGETS ${APPLICATION_EXECUTABLE}
         RUNTIME DESTINATION bin

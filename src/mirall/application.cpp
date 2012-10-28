@@ -171,7 +171,7 @@ Application::Application(int &argc, char **argv) :
     qDebug() << "Network Location: " << NetworkLocation::currentLocation().encoded();
 
 
-    _socketApi = new SocketApi(this, cfg.configPathWithAppName());
+    _socketApi = new SocketApi(this, cfg.configPathWithAppName(), _folderMan);
 }
 
 Application::~Application()
