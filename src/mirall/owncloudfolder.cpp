@@ -1,4 +1,4 @@
-/*
+// /*
  * Copyright (C) by Duncan Mac-Vicar P. <duncan@kde.org>
  * Copyright (C) by Klaas Freitag <freitag@owncloud.org>
  *
@@ -330,6 +330,7 @@ void ownCloudFolder::wipe()
 SyncFileStatus ownCloudFolder::fileStatus( const QString& file )
 {
     if( file.isEmpty() ) return STATUS_NONE;
+
     QFileInfo fi( path(), file );
 
     foreach( const SyncFileItem item, _items ) {
