@@ -20,6 +20,8 @@
 
 #include <QLocalServer>
 
+class PublicShareDialog;
+
 namespace Attica {
     class ProviderManager;
 }
@@ -47,6 +49,8 @@ private slots:
     void onProviderAdded(const Attica::Provider& provider);
 
     void onGotPublicShareLink(Attica::BaseJob*);
+    void onPublicShareDialogAccepted();
+    void onPublicShareDialogRejected();
 
 private:
     void sendMessage(QLocalSocket* socket, const QString& message);
@@ -61,6 +65,10 @@ private:
     Attica::Provider _atticaProvider;
 
     FolderMan* _folderMan;
+
+    QString _relativePath;
+
+    PublicShareDialog* _publicShareDialog;
 };
 
 }

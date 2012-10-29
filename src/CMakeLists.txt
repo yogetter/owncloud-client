@@ -18,6 +18,7 @@ mirall/owncloudwizardresultpage.ui
 mirall/owncloudcredentialspage.ui
 mirall/sslerrordialog.ui
 mirall/proxydialog.ui
+mirall/socketapi/publicsharedialog.ui
 )
 
 set(3rdparty_SRC
@@ -117,6 +118,7 @@ set(mirall_SRCS
     mirall/logbrowser.cpp
     mirall/proxydialog.cpp
     mirall/socketapi.cpp
+    mirall/socketapi/publicsharedialog.cpp
 )
 
 set(mirall_HEADERS
@@ -130,6 +132,7 @@ set(mirall_HEADERS
     mirall/logbrowser.h
     mirall/proxydialog.h
     mirall/socketapi.h
+    mirall/socketapi/publicsharedialog.h
 )
 
 if( UNIX AND NOT APPLE)

@@ -17,6 +17,7 @@
 #include "mirallconfigfile.h"
 #include "folderman.h"
 #include "folder.h"
+#include "socketapi/publicsharedialog.h"
 
 #include <attica/providermanager.h>
 
@@ -163,12 +164,41 @@ void SocketApi::command_PUBLIC_SHARE_LINK(const QString& argument, QLocalSocket*
         {
             int lastChars = argument.length()-folder->path().length()-1;
             relativePath = argument.right(lastChars);
+            relativePath.prepend("/");
+            relativePath.prepend(folder->secondPath());
+            qDebug() << "with remote path blabla? " << relativePath;
             break;
         }
     }
     qDebug() << "relative path: " << relativePath;
 
-    Attica::ItemPostJob<Attica::Link>* job = _atticaProvider.requestPublicShareLink(relativePath);
+    _relativePath = relativePath;
+
+
+    _publicShareDialog = new PublicShareDialog();
+    connect(_publicShareDialog, SIGNAL(accepted()), SLOT(onPublicShareDialogAccepted()));
+    connect(_publicShareDialog, SIGNAL(rejected()), SLOT(onPublicShareDialogRejected()));
+    _publicShareDialog->show();
+    _publicShareDialog->activateWindow();
+    _publicShareDialog->raise();
+}
+
+void SocketApi::onPublicShareDialogAccepted()
+{
+    qDebug() << Q_FUNC_INFO << _publicShareDialog->password() << _publicShareDialog->validityLength();
+
+    Attica::ItemPostJob<Attica::Link>* job = _atticaProvider.requestPublicShareLink(_relativePath);
     connect(job, SIGNAL(finished(Attica::BaseJob*)), SLOT(onGotPublicShareLink(Attica::BaseJob*)));
     job->start();
+
+    delete _publicShareDialog;
 }
+
+void SocketApi::onPublicShareDialogRejected()
+{
+    qDebug() << Q_FUNC_INFO;
+
+    delete _publicShareDialog;
+}
+
+
