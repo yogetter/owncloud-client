@@ -377,54 +377,5 @@ SyncFileStatus ownCloudFolder::fileStatus( const QString& file )
     return STATUS_NEW;
 }
 
-SyncFileStatus ownCloudFolder::fileStatus( const QString& file )
-{
-    foreach( const SyncFileItem item, _items ) {
-        const QString fullFileName = path() + item.file;
-        qDebug() << "FileStatus compare: " << item.file << " <> " << fullFileName;
-
-        if( item.file == fullFileName ) {
-            switch( item.instruction ) {
-            case   CSYNC_INSTRUCTION_NONE:
-                return STATUS_NONE;
-                break;
-            case   CSYNC_INSTRUCTION_EVAL:
-                return STATUS_EVAL;
-                break;
-            case   CSYNC_INSTRUCTION_RENAME:
-                return STATUS_RENAME;
-                break;
-            case   CSYNC_INSTRUCTION_NEW:
-                return STATUS_NEW;
-                break;
-            case   CSYNC_INSTRUCTION_CONFLICT:
-                return STATUS_CONFLICT;
-                break;
-            case   CSYNC_INSTRUCTION_IGNORE:
-                return STATUS_IGNORE;
-                break;
-            case   CSYNC_INSTRUCTION_SYNC:
-                return STATUS_SYNC;
-                break;
-            case   CSYNC_INSTRUCTION_STAT_ERROR:
-                return STATUS_STAT_ERROR;
-                break;
-            case   CSYNC_INSTRUCTION_ERROR:
-                return STATUS_ERROR;
-                break;
-            case   CSYNC_INSTRUCTION_DELETED:
-                return STATUS_DELETED;
-                break;
-            case   CSYNC_INSTRUCTION_UPDATED:
-                return STATUS_UPDATED;
-                break;
-            default:
-                return STATUS_NEW;
-            }
-
-        }
-    }
-}
-
 } // ns
 
