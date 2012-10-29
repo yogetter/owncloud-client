@@ -50,11 +50,8 @@ SocketApi::SocketApi(QObject* parent, const QUrl& localFile, FolderMan* folderMa
     connect(_localServer, SIGNAL(newConnection()), this, SLOT(onNewConnection()));
 
     // setup attica
-    QString tmp(QLatin1String("http://%1ocs/providers.php"));
-
-//     QUrl providerFile(tmp.arg(MirallConfigFile().ownCloudUrl()));
-
-    QUrl providerFile("http://deploy.local/providers.xml");
+    QString tmp(QLatin1String("%1ocs/providers.php"));
+    QUrl providerFile(tmp.arg(MirallConfigFile().ownCloudUrl()));
 
     _atticaManager = new Attica::ProviderManager();
     qDebug() << Q_FUNC_INFO << "Add provider file: " << providerFile;
