@@ -45,6 +45,7 @@ class ownCloudInfo;
 class SslErrorDialog;
 class SettingsDialog;
 class ItemProgressDialog;
+class SocketApi;
 
 class Application : public SharedTools::QtSingleApplication
 {
@@ -137,7 +138,7 @@ private:
     LogBrowser *_logBrowser;
     QPointer<SettingsDialog> _settingsDialog;
     QPointer<ItemProgressDialog> _progressDialog;
-
+    QPointer<SocketApi> _socketApi;
     QString _logFile;
     QString _logDirectory;
 

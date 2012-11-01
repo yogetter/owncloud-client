@@ -38,6 +38,7 @@
 #include "mirall/utility.h"
 #include "mirall/inotify.h"
 #include "mirall/connectionvalidator.h"
+#include "mirall/socketapi/socketapi.h"
 
 #include "creds/abstractcredentials.h"
 
@@ -180,6 +181,9 @@ Application::Application(int &argc, char **argv) :
              SLOT(slotRefreshQuotaDisplay(qint64, qint64)));
 
     qDebug() << "Network Location: " << NetworkLocation::currentLocation().encoded();
+
+
+    _socketApi = new SocketApi(this, cfg.configPathWithAppName().append(QLatin1String("socket")));
 }
 
 Application::~Application()
@@ -190,7 +194,7 @@ Application::~Application()
 
     delete _logBrowser;
     delete _tray; // needed, see ctor
-
+    delete _socketApi;
     qDebug() << "* Mirall shutdown";
 }
 
