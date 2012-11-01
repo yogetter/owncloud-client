@@ -46,6 +46,7 @@ private slots:
     void onNewConnection();
     void onReadyRead();
 
+    void onSyncStateChanged(const QString&);
     void onProviderAdded(const Attica::Provider& provider);
 
     void onGotPublicShareLink(Attica::BaseJob*);
@@ -66,9 +67,11 @@ private:
 
     FolderMan* _folderMan;
 
-    QString _relativePath;
+    QString _remotePath;
 
     PublicShareDialog* _publicShareDialog;
+
+    QList<QLocalSocket*> _listener;
 };
 
 }

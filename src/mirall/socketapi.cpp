@@ -17,6 +17,7 @@
 #include "mirallconfigfile.h"
 #include "folderman.h"
 #include "folder.h"
+#include "owncloudfolder.h"
 #include "socketapi/publicsharedialog.h"
 
 #include <attica/providermanager.h>
@@ -59,6 +60,8 @@ SocketApi::SocketApi(QObject* parent, const QUrl& localFile, FolderMan* folderMa
     connect(_atticaManager, SIGNAL(providerAdded(Attica::Provider)), SLOT(onProviderAdded(Attica::Provider)));
 
 
+    // folder watcher
+    connect(_folderMan, SIGNAL(folderSyncStateChange(QString)), SLOT(onSyncStateChanged(QString)));
 }
 
 SocketApi::~SocketApi()
@@ -73,6 +76,7 @@ void SocketApi::onNewConnection()
     QLocalSocket* socket = _localServer->nextPendingConnection();
     connect(socket, SIGNAL(readyRead()), this, SLOT(onReadyRead()));
     Q_ASSERT(socket->readAll().isEmpty());
+    _listener.append(socket);
 }
 
 void SocketApi::onReadyRead()
@@ -101,6 +105,16 @@ void SocketApi::onReadyRead()
         {
             qDebug() << "WARNING! got invalid command over socket: " << command;
         }
+    }
+}
+
+void SocketApi::onSyncStateChanged(const QString&)
+{
+    qDebug() << Q_FUNC_INFO;
+//     QMessageBox::information(0, "Foo", "Sync state changed!");
+    foreach(QLocalSocket* current, _listener)
+    {
+        sendMessage(current, "UPDATE_VIEW");
     }
 }
 
@@ -136,11 +150,62 @@ void SocketApi::sendMessage(QLocalSocket* socket, const QString& message)
 void SocketApi::command_RETRIEVE_STATUS(const QString& argument, QLocalSocket* socket)
 {
     //TODO: do security checks?!
-    QDir dir(argument);
+    ownCloudFolder* folder = qobject_cast< ownCloudFolder* >(_folderMan->folderForPath( argument ));
+    // this can happen in offline mode e.g., nothing to worry about
+    if(!folder)
+        return;
 
+    QDir dir(argument);
     foreach(QString entry, dir.entryList())
     {
-        sendMessage(socket, dir.absoluteFilePath(entry).prepend("needsupdate:").prepend("STATUS:"));
+        QString absoluteFilePath = dir.absoluteFilePath(entry);
+        QString statusString;
+        SyncFileStatus fileStatus = folder->fileStatus(absoluteFilePath);
+        switch(fileStatus)
+        {
+            case STATUS_NONE:
+                statusString = QLatin1String("STATUS_NONE");
+                break;
+            case STATUS_EVAL:
+                statusString = QLatin1String("STATUS_EVAL");
+                break;
+            case STATUS_REMOVE:
+                statusString = QLatin1String("STATUS_REMOVE");
+                break;
+            case STATUS_RENAME:
+                statusString = QLatin1String("STATUS_RENAME");
+                break;
+            case STATUS_NEW:
+                statusString = QLatin1String("STATUS_NEW");
+                break;
+            case STATUS_CONFLICT:
+                statusString = QLatin1String("STATUS_CONFLICT");
+                break;
+            case STATUS_IGNORE:
+                statusString = QLatin1String("STATUS_IGNORE");
+                break;
+            case STATUS_SYNC:
+                statusString = QLatin1String("STATUS_SYNC");
+                break;
+            case STATUS_STAT_ERROR:
+                statusString = QLatin1String("STATUS_STAT_ERROR");
+                break;
+            case STATUS_ERROR:
+                statusString = QLatin1String("STATUS_ERROR");
+                break;
+            case STATUS_UPDATED:
+                statusString = QLatin1String("STATUS_UPDATED");
+                break;
+            default:
+                qWarning() << "not all SyncFileStatus items checked!";
+                Q_ASSERT(false);
+                statusString = QLatin1String("STATUS_NONE");
+
+        }
+        qDebug() << "******************* FILESTATUS: " << statusString << (int)fileStatus;
+        QString message("%1:%2:%3");
+        message = message.arg("STATUS").arg(statusString).arg(absoluteFilePath);
+        sendMessage(socket, message);
     }
 
     sendMessage(socket, "finished");
@@ -150,26 +215,25 @@ void SocketApi::command_PUBLIC_SHARE_LINK(const QString& argument, QLocalSocket*
 {
     qDebug() << "copy online link to clipboard: " << argument;
 
-    if(!_atticaProvider.isEnabled())
+    if(!_atticaProvider.isEnabled()) {
+        qWarning() << "Attica Provider is not enabled!";
         return;
-
-
-    QString relativePath = argument;
-    foreach(Folder* folder, _folderMan->map().values())
-    {
-        if(argument.startsWith(folder->path()))
-        {
-            int lastChars = argument.length()-folder->path().length()-1;
-            relativePath = argument.right(lastChars);
-            relativePath.prepend("/");
-            relativePath.prepend(folder->secondPath());
-            qDebug() << "with remote path blabla? " << relativePath;
-            break;
-        }
     }
-    qDebug() << "relative path: " << relativePath;
 
-    _relativePath = relativePath;
+
+    ownCloudFolder* folder = qobject_cast< ownCloudFolder* >(_folderMan->folderForPath( argument ));
+//     Q_ASSERT( folder );
+//     if(!folder)
+//         return;
+
+    int lastChars = argument.length()-folder->path().length();
+    QString remotePath;
+    remotePath = argument.right(lastChars);
+    remotePath.prepend("/");
+    remotePath.prepend(folder->secondPath());
+
+    qDebug() << "remote path: " << remotePath;
+    _remotePath = remotePath;
 
 
     _publicShareDialog = new PublicShareDialog();
@@ -184,7 +248,7 @@ void SocketApi::onPublicShareDialogAccepted()
 {
     qDebug() << Q_FUNC_INFO << _publicShareDialog->password() << _publicShareDialog->validityLength();
 
-    Attica::ItemPostJob<Attica::Link>* job = _atticaProvider.requestPublicShareLink(_relativePath);
+    Attica::ItemPostJob<Attica::Link>* job = _atticaProvider.requestPublicShareLink(_remotePath);
     connect(job, SIGNAL(finished(Attica::BaseJob*)), SLOT(onGotPublicShareLink(Attica::BaseJob*)));
     job->start();
 
