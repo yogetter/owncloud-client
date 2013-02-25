@@ -18,12 +18,8 @@
 
 #include <QWizard>
 
-#include "ui_owncloudwizardselecttypepage.h"
-#include "ui_createanowncloudpage.h"
-#include "ui_owncloudftpaccesspage.h"
+#include "ui_owncloudsetuppage_ng.h"
 #include "ui_owncloudwizardresultpage.h"
-#include "ui_owncloudcredentialspage.h"
-#include "ui_owncloudsetuppage.h"
 
 class QLabel;
 class QVariant;
@@ -46,9 +42,9 @@ public:
 
 protected slots:
   void slotPwdStoreChanged( int );
-  void slotSecureConChanged( int );
   void handleNewOcUrl(const QString& ocUrl);
   void setupCustomization();
+  void slotToggleAdvanced(int state);
 private:
   Ui_OwncloudSetupPage _ui;
 };
@@ -61,10 +57,6 @@ public:
     enum {
       Page_oCWelcome,
       Page_oCSetup,
-      Page_SelectType,
-      Page_Create_OC,
-      Page_OC_Credentials,
-      Page_FTP,
       Page_Install
     };
 
@@ -77,7 +69,6 @@ public:
 
     void setOCUrl( const QString& );
     void setOCUser( const QString& );
-    void setAllowPasswordStorage( bool );
 
     void setupCustomMedia( QVariant, QLabel* );
     QString ocUrl() const;
@@ -119,79 +110,6 @@ public:
 /**
  * page to ask for the type of Owncloud to connect to
  */
-
-class OwncloudWizardSelectTypePage: public QWizardPage
-{
-    Q_OBJECT
-public:
-  OwncloudWizardSelectTypePage();
-  ~OwncloudWizardSelectTypePage();
-
-  virtual bool isComplete() const;
-  virtual void initializePage();
-  int nextId() const;
-  void setOCUrl( const QString& );
-  void showOCUrlLabel( const QString& );
-
-private:
-  Ui_OwncloudWizardSelectTypePage _ui;
-};
-
-class CreateAnOwncloudPage: public QWizardPage
-{
-    Q_OBJECT
-public:
-  CreateAnOwncloudPage();
-  ~CreateAnOwncloudPage();
-
-  virtual bool isComplete() const;
-  virtual void initializePage();
-  virtual int nextId() const;
-
-  QString domain() const;
-
-private:
-  Ui_CreateAnOwncloudPage _ui;
-
-};
-
-class OwncloudCredentialsPage: public QWizardPage
-{
-    Q_OBJECT
-public:
-  OwncloudCredentialsPage();
-  ~OwncloudCredentialsPage();
-
-  virtual bool isComplete() const;
-  virtual void initializePage();
-  virtual int nextId() const;
-
-protected slots:
-  void slotPwdStoreChanged( int );
-
-private:
-  Ui_OwncloudCredentialsPage _ui;
-
-};
-/**
- * page to ask for the ftp credentials etc. for ftp install
- */
-class OwncloudFTPAccessPage : public QWizardPage
-{
-  Q_OBJECT
-public:
-  OwncloudFTPAccessPage();
-  ~OwncloudFTPAccessPage();
-
-  virtual bool isComplete() const;
-  virtual void initializePage();
-  void setFTPUrl( const QString& );
-  virtual int nextId() const;
-
-private:
-  Ui_OwncloudFTPAccessPage _ui;
-
-};
 
 /**
  * page to display the install result

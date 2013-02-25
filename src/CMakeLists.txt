@@ -18,11 +18,8 @@ mirall/folderwizardnetworkpage.ui
 mirall/folderwizardowncloudpage.ui
 mirall/statusdialog.ui
 mirall/owncloudwizardselecttypepage.ui
-mirall/owncloudsetuppage.ui
-mirall/createanowncloudpage.ui
-mirall/owncloudftpaccesspage.ui
+mirall/owncloudsetuppage_ng.ui
 mirall/owncloudwizardresultpage.ui
-mirall/owncloudcredentialspage.ui
 mirall/sslerrordialog.ui
 mirall/proxydialog.ui
 mirall/fileitemdialog.ui
