@@ -75,6 +75,7 @@ set(libsync_SRCS
     mirall/owncloudinfo.cpp
     mirall/logger.cpp
     mirall/utility.cpp
+    mirall/connectionvalidator.cpp
 )
 set(libsync_HEADERS 
     mirall/folderman.h
@@ -87,6 +88,7 @@ set(libsync_HEADERS
     mirall/owncloudinfo.h
     mirall/credentialstore.h
     mirall/logger.h
+    mirall/connectionvalidator.h
 )
 
 IF( INOTIFY_FOUND )
