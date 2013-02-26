@@ -33,42 +33,12 @@ OwncloudSetupWizard::OwncloudSetupWizard( FolderMan *folderMan, Theme *theme, QO
     _checkInstallationRequest(0),
     _folderMan(folderMan)
 {
-    _process = new QProcess( this );
-
-    QObject::connect(_process, SIGNAL(readyReadStandardOutput()),
-                     SLOT(slotReadyReadStandardOutput()));
-
-    QObject::connect(_process, SIGNAL(readyReadStandardError()),
-                     SLOT(slotReadyReadStandardError()));
-
-    QObject::connect(_process, SIGNAL(stateChanged(QProcess::ProcessState)),
-                     SLOT(slotStateChanged(QProcess::ProcessState)));
-
-    QObject::connect(_process, SIGNAL(error(QProcess::ProcessError)),
-                     SLOT(slotError(QProcess::ProcessError)));
-
-    QObject::connect(_process, SIGNAL(started()),
-                     SLOT(slotStarted()));
-
-    QObject::connect(_process, SIGNAL(finished(int, QProcess::ExitStatus)),
-                     SLOT(slotProcessFinished(int, QProcess::ExitStatus)));
-
-
     _ocWizard = new OwncloudWizard();
 
     connect( _ocWizard, SIGNAL(connectToOCUrl( const QString& ) ),
              this, SLOT(slotConnectToOCUrl( const QString& )));
 
-    connect( _ocWizard, SIGNAL(installOCServer()),
-             this, SLOT(slotInstallOCServer()));
-
-    connect( _ocWizard, SIGNAL(installOCLocalhost()),
-             this, SLOT(slotCreateOCLocalhost()));
-
     connect( _ocWizard, SIGNAL(finished(int)),this,SLOT(slotAssistantFinished(int)));
-
-    // in case of cancel, terminate the owncloud-admin script.
-    connect( _ocWizard, SIGNAL(rejected()), _process, SLOT(terminate()));
 
     connect( _ocWizard, SIGNAL(clearPendingRequests()),
              this, SLOT(slotClearPendingRequests()));
@@ -81,6 +51,36 @@ OwncloudSetupWizard::~OwncloudSetupWizard()
 {
 
 }
+
+void OwncloudSetupWizard::startWizard(bool intro)
+{
+    // create the ocInfo object
+    connect(ownCloudInfo::instance(),SIGNAL(ownCloudInfoFound(QString,QString,QString,QString)),
+            SLOT(slotOwnCloudFound(QString,QString,QString,QString)));
+    connect(ownCloudInfo::instance(),SIGNAL(noOwncloudFound(QNetworkReply*)),
+            SLOT(slotNoOwnCloudFound(QNetworkReply*)));
+    connect(ownCloudInfo::instance(),SIGNAL(webdavColCreated(QNetworkReply::NetworkError)),
+            SLOT(slotCreateRemoteFolderFinished(QNetworkReply::NetworkError)));
+
+    MirallConfigFile cfgFile;
+    // Fill the entry fields with existing values.
+    QString url = cfgFile.ownCloudUrl();
+    if( !url.isEmpty() ) {
+        _ocWizard->setOCUrl( url );
+    }
+    QString user = cfgFile.ownCloudUser();
+    if( !user.isEmpty() ) {
+        _ocWizard->setOCUser( user );
+    }
+
+    if (intro)
+        _ocWizard->setStartId(OwncloudWizard::Page_oCWelcome);
+    else
+        _ocWizard->setStartId(OwncloudWizard::Page_oCSetup);
+    _ocWizard->restart();
+    _ocWizard->show();
+}
+
 
 // Method executed when the user ends the wizard, either with 'accept' or 'reject'.
 // accept the custom config to be the main one if Accepted.
@@ -144,6 +144,7 @@ void OwncloudSetupWizard::slotConnectToOCUrl( const QString& url )
   testOwnCloudConnect();
 }
 
+// Cleanup pending requests if user clicks the back button
 void OwncloudSetupWizard::slotClearPendingRequests()
 {
     qDebug() << "Pending request: " << _mkdirRequestReply;
@@ -190,6 +191,7 @@ void OwncloudSetupWizard::testOwnCloudConnect()
         _checkInstallationRequest = info->checkInstallation();
     } else {
         qDebug() << "   ownCloud seems not to be configured, can not start test connect.";
+        _ocWizard->displayError( tr("No temporar configuration found to test connect."));
     }
 }
 
@@ -202,7 +204,7 @@ void OwncloudSetupWizard::slotOwnCloudFound( const QString& url, const QString& 
     _ocWizard->button( QWizard::FinishButton )->setEnabled( true );
 
     // start the local folder creation
-    setupLocalSyncFolder();
+    setupSyncFolder();
 }
 
 void OwncloudSetupWizard::slotNoOwnCloudFound( QNetworkReply *err )
@@ -210,200 +212,19 @@ void OwncloudSetupWizard::slotNoOwnCloudFound( QNetworkReply *err )
     _ocWizard->appendToResultWidget(tr("<font color=\"red\">Failed to connect to %1!</font>")
                                     .arg(Theme::instance()->appNameGUI()));
     _ocWizard->appendToResultWidget(tr("Error: <tt>%1</tt>").arg(err->errorString()) );
-
+    _ocWizard->displayError( tr("Failed to connect to %1:<br/>%2").arg( Theme::instance()->appNameGUI()).arg(err->errorString()));
     // remove the config file again
     MirallConfigFile cfgFile( _configHandle );
     cfgFile.cleanupCustomConfig();
     finalizeSetup( false );
 }
 
-bool OwncloudSetupWizard::isBusy()
+OwncloudWizard *OwncloudSetupWizard::wizard()
 {
-  return _process->state() > 0;
+    return _ocWizard;
 }
 
- OwncloudWizard *OwncloudSetupWizard::wizard()
- {
-   return _ocWizard;
- }
-
-void OwncloudSetupWizard::slotCreateOCLocalhost()
-{
-  if( isBusy() ) {
-    qDebug() << "Can not install now, busy. Come back later.";
-    return;
-  }
-
-  qDebug() << "Install OC on localhost";
-
-  QStringList args;
-
-  args << QLatin1String("install");
-  args << QLatin1String("--server-type") << QLatin1String("local");
-  args << QLatin1String("--root_helper") << QLatin1String("kdesu -c");
-
-  const QString adminUser = _ocWizard->field(QLatin1String("OCUser")).toString();
-  const QString adminPwd  = _ocWizard->field(QLatin1String("OCPasswd")).toString();
-
-  args << QLatin1String("--admin-user") << adminUser;
-  args << QLatin1String("--admin-password") << adminPwd;
-
-  runOwncloudAdmin( args );
-
-  // define
-  _ocWizard->setField( QLatin1String("OCUrl"), QLatin1String( "http://localhost/owncloud/") );
-}
-
-void OwncloudSetupWizard::slotInstallOCServer()
-{
-  if( isBusy() ) {
-    qDebug() << "Can not install now, busy. Come back later.";
-    return;
-  }
-
-  const QString server = _ocWizard->field(QLatin1String("ftpUrl")).toString();
-  const QString user   = _ocWizard->field(QLatin1String("ftpUser")).toString();
-  const QString passwd = _ocWizard->field(QLatin1String("ftpPasswd")).toString();
-  const QString adminUser = _ocWizard->field(QLatin1String("OCUser")).toString();
-  const QString adminPwd  = _ocWizard->field(QLatin1String("OCPasswd")).toString();
-
-  qDebug() << "Install OC on " << server << " as user " << user;
-
-  QStringList args;
-  args << QLatin1String("install");
-  args << QLatin1String("--server-type") << QLatin1String("ftp");
-  args << QLatin1String("--server")   << server;
-  args << QLatin1String("--ftp-user")     << user;
-  if( ! passwd.isEmpty() ) {
-    args << QLatin1String("--ftp-password") << passwd;
-  }
-  args << QLatin1String("--admin-user") << adminUser;
-  args << QLatin1String("--admin-password") << adminPwd;
-
-  runOwncloudAdmin( args );
-  _ocWizard->setField( QLatin1String("OCUrl"), QString::fromLatin1( "%1/owncloud/")
-                       .arg(_ocWizard->field(QLatin1String("myOCDomain")).toString() ));
-}
-
-void OwncloudSetupWizard::runOwncloudAdmin( const QStringList& args )
-{
-  const QString bin(QLatin1String("/usr/bin/owncloud-admin"));
-  qDebug() << "starting " << bin << " with args. " << args;
-  if( _process->state() != QProcess::NotRunning	) {
-    qDebug() << "Owncloud admin is still running, skip!";
-    return;
-  }
-  if( checkOwncloudAdmin( bin )) {
-    _ocWizard->appendToResultWidget( tr("Starting script owncloud-admin...") );
-    _process->start( bin, args );
-  } else {
-    slotProcessFinished( 1, QProcess::NormalExit );
-  }
-}
-
-
-void OwncloudSetupWizard::slotReadyReadStandardOutput()
-{
-  QByteArray arr = _process->readAllStandardOutput();
-  QTextCodec *codec = QTextCodec::codecForName("UTF-8");
-  // render the output to status line
-  QString string = codec->toUnicode( arr );
-  _ocWizard->appendToResultWidget( string, OwncloudWizard::LogPlain );
-
-}
-
-void OwncloudSetupWizard::slotReadyReadStandardError()
-{
-  qDebug() << "!! " <<_process->readAllStandardError();
-}
-
-void OwncloudSetupWizard::slotStateChanged( QProcess::ProcessState )
-{
-
-}
-
-void OwncloudSetupWizard::slotError( QProcess::ProcessError err )
-{
-  qDebug() << "An Error happend with owncloud-admin: " << err << ", exit-Code: " << _process->exitCode();
-}
-
-void OwncloudSetupWizard::slotStarted()
-{
-  _ocWizard->button( QWizard::FinishButton )->setEnabled( false );
-  _ocWizard->button( QWizard::BackButton )->setEnabled( false );
-   QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-}
-
-/*
- *
- */
-void OwncloudSetupWizard::slotProcessFinished( int res, QProcess::ExitStatus )
-{
-  _ocWizard->button( QWizard::FinishButton )->setEnabled( true );
-  _ocWizard->button( QWizard::BackButton)->setEnabled( true );
-  QApplication::restoreOverrideCursor();
-
-  qDebug() << "exit code: " << res;
-  if( res ) {
-    _ocWizard->appendToResultWidget( tr("<font color=\"red\">Installation of %1 failed!</font>").arg(Theme::instance()->appNameGUI()));
-    _ocWizard->showOCUrlLabel( false );
-    emit ownCloudSetupFinished( false );
-  } else {
-    // Successful installation. Write the config.
-    _ocWizard->appendToResultWidget( tr("<font color=\"green\">Installation of %1 succeeded!</font>").arg(Theme::instance()->appNameGUI()));
-    _ocWizard->showOCUrlLabel( true );
-
-    testOwnCloudConnect();
-  }
-}
-
-void OwncloudSetupWizard::startWizard(bool intro)
-{
-    // create the ocInfo object
-    connect(ownCloudInfo::instance(),SIGNAL(ownCloudInfoFound(QString,QString,QString,QString)),SLOT(slotOwnCloudFound(QString,QString,QString,QString)));
-    connect(ownCloudInfo::instance(),SIGNAL(noOwncloudFound(QNetworkReply*)),SLOT(slotNoOwnCloudFound(QNetworkReply*)));
-    connect(ownCloudInfo::instance(),SIGNAL(webdavColCreated(QNetworkReply::NetworkError)),SLOT(slotCreateRemoteFolderFinished(QNetworkReply::NetworkError)));
-
-    MirallConfigFile cfgFile;
-
-    QString url = cfgFile.ownCloudUrl();
-    if( !url.isEmpty() ) {
-        _ocWizard->setOCUrl( url );
-    }
-#ifdef OWNCLOUD_CLIENT
-    QString user = cfgFile.ownCloudUser();
-    if( !user.isEmpty() ) {
-        _ocWizard->setOCUser( user );
-    }
-
-    bool doStore = cfgFile.passwordStorageAllowed();
-
-    if (intro)
-        _ocWizard->setStartId(OwncloudWizard::Page_oCWelcome);
-    else
-        _ocWizard->setStartId(OwncloudWizard::Page_oCSetup);
-#endif
-    _ocWizard->restart();
-    _ocWizard->show();
-}
-
-
-/*
- *  method to check the if the owncloud admin script is existing
- */
-bool OwncloudSetupWizard::checkOwncloudAdmin( const QString& bin )
-{
-  QFileInfo fi( bin );
-  qDebug() << "checking owncloud-admin " << bin;
-  if( ! (fi.exists() && fi.isExecutable() ) ) {
-    _ocWizard->appendToResultWidget( tr("The owncloud admin script can not be found.\n"
-      "Setup can not be done.") );
-      return false;
-  }
-  return true;
-}
-
-void OwncloudSetupWizard::setupLocalSyncFolder()
+void OwncloudSetupWizard::setupSyncFolder()
 {
     _localFolder = QDir::homePath() + QDir::separator() + Theme::instance()->defaultClientFolder();
 
@@ -491,8 +312,6 @@ void OwncloudSetupWizard::slotCreateRemoteFolderFinished( QNetworkReply::Network
 
 void OwncloudSetupWizard::finalizeSetup( bool success )
 {
-    // enable/disable the finish button.
-    _ocWizard->enableFinishOnResultWidget(success);
 
     if( success ) {
         if( !(_localFolder.isEmpty() || _remoteFolder.isEmpty() )) {
@@ -505,12 +324,16 @@ void OwncloudSetupWizard::finalizeSetup( bool success )
                                          .arg(Theme::instance()->appNameGUI())
                                          + QLatin1String("</b></font></p>"));
         _ocWizard->appendToResultWidget( tr("Press Finish to permanently accept this connection."));
+
+        // Go to result page.
+
     } else {
         _ocWizard->appendToResultWidget(QLatin1String("<p><font color=\"red\">")
                                         + tr("Connection to %1 could not be established. Please check again.")
                                         .arg(Theme::instance()->appNameGUI())
                                         + QLatin1String("</font></p>"));
     }
+    _ocWizard->successfullyConnected(success);
 }
 
 }

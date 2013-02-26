@@ -17,7 +17,6 @@
 
 #include <QObject>
 #include <QWidget>
-#include <QProcess>
 #include <QNetworkReply>
 #include <QPointer>
 
@@ -46,8 +45,6 @@ public:
 
     void installServer();
 
-    bool isBusy();
-
     void writeOwncloudConfig();
 
     /**
@@ -55,7 +52,7 @@ public:
    * string.
    */
 
-    void    setupLocalSyncFolder();
+    void    setupSyncFolder();
 
     OwncloudWizard *wizard();
 
@@ -68,18 +65,8 @@ signals:
 public slots:
 
 protected slots:
-    // QProcess related slots:
-    void slotReadyReadStandardOutput();
-    void slotReadyReadStandardError();
-    void slotStateChanged( QProcess::ProcessState );
-    void slotError( QProcess::ProcessError );
-    void slotStarted();
-    void slotProcessFinished( int, QProcess::ExitStatus );
-
     // wizard dialog signals
-    void slotInstallOCServer();
     void slotConnectToOCUrl( const QString& );
-    void slotCreateOCLocalhost();
 
     void slotCreateRemoteFolder(bool);
 
@@ -91,8 +78,6 @@ private slots:
     void slotClearPendingRequests();
 
 private:
-    bool checkOwncloudAdmin( const QString& );
-    void runOwncloudAdmin( const QStringList& );
     bool createRemoteFolder( const QString& );
     void finalizeSetup( bool );
 
@@ -103,7 +88,6 @@ private:
     QPointer<QNetworkReply>  _mkdirRequestReply;
     QPointer<QNetworkReply>  _checkInstallationRequest;
     FolderMan      *_folderMan;
-    QProcess       *_process;
 
     QString         _configHandle;
     QString         _localFolder;

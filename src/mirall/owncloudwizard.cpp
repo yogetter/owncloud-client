@@ -89,7 +89,7 @@ OwncloudSetupPage::OwncloudSetupPage()
 
     connect(_ui.leUrl, SIGNAL(textChanged(QString)), SLOT(handleNewOcUrl(QString)));
 
-    registerField( QLatin1String("OCUrl"), _ui.leUrl );
+    registerField( QLatin1String("OCUrl"),    _ui.leUrl );
     registerField( QLatin1String("OCUser"),   _ui.leUsername );
     registerField( QLatin1String("OCPasswd"), _ui.lePassword);
     connect( _ui.lePassword, SIGNAL(textChanged(QString)), this, SIGNAL(completeChanged()));
@@ -98,6 +98,15 @@ OwncloudSetupPage::OwncloudSetupPage()
     _ui.errorLabel->setVisible(false);
     _ui.advancedBox->setVisible(false);
 
+    // Error label
+    // painter->setBrush( QColor(0xbb, 0x4d, 0x4d) );
+    // painter->setPen( QColor(0xaa, 0xaa, 0xaa));
+
+    QString style = QLatin1String("border: 1px solid red; border-radius: 4px; padding: 4px;"
+                                  "background-color: #bb4d4d; color: #ffffff;");
+
+    _ui.errorLabel->setStyleSheet( style );
+    _ui.errorLabel->setWordWrap(true);
     setupCustomization();
 }
 
@@ -124,12 +133,6 @@ void OwncloudSetupPage::setOCUrl( const QString& newUrl )
         _ui.leUrl->clear();
         return;
     }
-    if( url.startsWith( QLatin1String("https"))) {
-        url.remove(0,5);
-    } else if( url.startsWith( QLatin1String("http"))) {
-        url.remove(0,4);
-    }
-    if( url.startsWith( QLatin1String("://"))) url.remove(0,3);
 
     _ui.leUrl->setText( url );
 }
@@ -156,15 +159,11 @@ void OwncloudSetupPage::setupCustomization()
     }
 }
 
-void OwncloudSetupPage::slotPwdStoreChanged( int state )
-{
-    _ui.lePassword->setEnabled( state == Qt::Unchecked );
-    emit completeChanged();
-}
-
+// slot hit from textChanged of the url entry field.
 void OwncloudSetupPage::handleNewOcUrl(const QString& ocUrl)
 {
     QString url = ocUrl;
+#if 0
     int len = 0;
     if (url.startsWith(QLatin1String("https://"))) {
         len = 8;
@@ -179,22 +178,58 @@ void OwncloudSetupPage::handleNewOcUrl(const QString& ocUrl)
         _ui.leUrl->setCursorPosition(qMax(0, pos-len));
 
     }
+#endif
 }
 
 bool OwncloudSetupPage::isComplete() const
 {
     if( _ui.leUrl->text().isEmpty() ) return false;
 
-    return !(_ui.leUsername->text().isEmpty() || _ui.lePassword->text().isEmpty() );
+    return !( _ui.lePassword->text().isEmpty() || _ui.leUsername->text().isEmpty() );
 }
 
 void OwncloudSetupPage::initializePage()
 {
+    _connected = false;
 }
 
 int OwncloudSetupPage::nextId() const
 {
   return OwncloudWizard::Page_Install;
+}
+
+QString OwncloudSetupPage::url() const
+{
+    QString url = _ui.leUrl->text().simplified();
+    return url;
+}
+
+void OwncloudSetupPage::setConnected( bool comp )
+{
+    _connected = comp;
+}
+
+bool OwncloudSetupPage::validatePage()
+{
+    bool re = false;
+
+    if( ! _connected) {
+        emit connectToOCUrl( url() );
+        return false;
+    } else {
+        // connecting is running
+        return true;
+    }
+}
+
+void OwncloudSetupPage::setErrorString( const QString& err )
+{
+    if( err.isEmpty()) {
+        _ui.errorLabel->setVisible(false);
+    } else {
+        _ui.errorLabel->setVisible(true);
+        _ui.errorLabel->setText(err);
+    }
 }
 
 // ======================================================================
@@ -217,12 +252,6 @@ void OwncloudWizardResultPage::initializePage()
 {
     _complete = false;
     // _ui.lineEditOCAlias->setText( "Owncloud" );
-}
-
-void OwncloudWizardResultPage::setComplete(bool complete)
-{
-    _complete = complete;
-    emit completeChanged();
 }
 
 bool OwncloudWizardResultPage::isComplete() const
@@ -280,30 +309,33 @@ OwncloudWizard::OwncloudWizard(QWidget *parent)
     setPage(Page_oCWelcome,  new OwncloudWelcomePage() );
     setPage(Page_oCSetup,    new OwncloudSetupPage() );
     setPage(Page_Install,    new OwncloudWizardResultPage() );
-
+    // note: start Id is set by the calling class depending on if the
+    // welcome text is to be shown or not.
 #ifdef Q_WS_MAC
     setWizardStyle( QWizard::ModernStyle );
 #endif
 
     connect( this, SIGNAL(currentIdChanged(int)), SLOT(slotCurrentPageChanged(int)));
 
+    OwncloudSetupPage *p = static_cast<OwncloudSetupPage*>(page(Page_oCSetup));
+    connect( p, SIGNAL(connectToOCUrl(QString)), SIGNAL(connectToOCUrl(QString)));
 }
 
 QString OwncloudWizard::ocUrl() const
 {
     QString url = field("OCUrl").toString().simplified();
-    if( field("secureConnect").toBool() ) {
-        url.prepend(QLatin1String("https://"));
-    } else {
-        url.prepend(QLatin1String("http://"));
-    }
     return url;
 }
 
-void OwncloudWizard::enableFinishOnResultWidget(bool enable)
+void OwncloudWizard::successfullyConnected(bool enable)
 {
-    OwncloudWizardResultPage *p = static_cast<OwncloudWizardResultPage*> (page( Page_Install ));
-    p->setComplete(enable);
+    OwncloudSetupPage *p = static_cast<OwncloudSetupPage*>(page(Page_oCSetup));
+    if( p ) {
+        p->setConnected( enable );
+    }
+    if( enable ) {
+        next();
+    }
 }
 
 void OwncloudWizard::slotCurrentPageChanged( int id )
@@ -314,25 +346,13 @@ void OwncloudWizard::slotCurrentPageChanged( int id )
   button(QWizard::BackButton)->setVisible(id != Page_oCSetup);
 
   if( id == Page_oCSetup ) {
-      button(QWizard::NextButton)->setText( tr("Connect...") );
+      setButtonText( QWizard::NextButton, tr("Connect...") );
       emit clearPendingRequests();
   }
 
   if( id == Page_Install ) {
     appendToResultWidget( QString::null );
     showOCUrlLabel( false );
-    if( field(QLatin1String("connectMyOC")).toBool() ) {
-      // check the url and connect.
-      _oCUrl = ocUrl();
-      emit connectToOCUrl( _oCUrl);
-    } else if( field(QLatin1String("createLocalOC")).toBool() ) {
-      qDebug() << "Connect to local!";
-      emit installOCLocalhost();
-    } else if( field(QLatin1String("createNewOC")).toBool() ) {
-      // call in installation mode and install to ftp site.
-      emit installOCServer();
-    } else {
-    }
   }
 }
 
@@ -342,10 +362,17 @@ void OwncloudWizard::showOCUrlLabel( bool show )
   p->showOCUrlLabel( _oCUrl, show );
 }
 
+void OwncloudWizard::displayError( const QString& msg )
+{
+    OwncloudSetupPage *p = static_cast<OwncloudSetupPage*>(page(Page_oCSetup));
+    if( p ) p->setErrorString( msg );
+}
+
 void OwncloudWizard::appendToResultWidget( const QString& msg, LogType type )
 {
-  OwncloudWizardResultPage *p = static_cast<OwncloudWizardResultPage*> (page( Page_Install ));
-  p->appendResultText( msg, type );
+  OwncloudWizardResultPage *r = static_cast<OwncloudWizardResultPage*> (page( Page_Install ));
+  r->appendResultText(msg, type);
+  qDebug() << "XXXXXXXXXXXXX " << msg;
 }
 
 void OwncloudWizard::setOCUrl( const QString& url )

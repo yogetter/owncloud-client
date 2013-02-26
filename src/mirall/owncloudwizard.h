@@ -39,14 +39,25 @@ public:
   void setOCUrl( const QString& );
   void setOCUser( const QString& );
   void setAllowPasswordStorage( bool );
+  bool validatePage();
+  QString url() const;
+  void setConnected(bool complete);
+
+public slots:
+  void setErrorString( const QString&  );
 
 protected slots:
-  void slotPwdStoreChanged( int );
   void handleNewOcUrl(const QString& ocUrl);
   void setupCustomization();
   void slotToggleAdvanced(int state);
+
+signals:
+  void connectToOCUrl( const QString& );
+
 private:
   Ui_OwncloudSetupPage _ui;
+  QString _oCUrl;
+  bool    _connected;
 };
 
 class OwncloudWizard: public QWizard
@@ -75,17 +86,18 @@ public:
 
     void enableFinishOnResultWidget(bool enable);
 
+    void displayError( const QString& );
+
 public slots:
     void appendToResultWidget( const QString& msg, LogType type = LogParagraph );
     void slotCurrentPageChanged( int );
     void showOCUrlLabel( bool );
 
+    void successfullyConnected(bool);
 
 signals:
-    void connectToOCUrl( const QString& );
-    void installOCServer();
-    void installOCLocalhost();
     void clearPendingRequests();
+    void connectToOCUrl( const QString& );
 
 private:
     QString _configFile;
@@ -123,8 +135,6 @@ public:
 
   virtual bool isComplete() const;
   virtual void initializePage();
-
-  void setComplete(bool complete);
 
 public slots:
   void appendResultText( const QString&, OwncloudWizard::LogType type = OwncloudWizard::LogParagraph );
