@@ -23,6 +23,7 @@ mirall/owncloudwizardresultpage.ui
 mirall/sslerrordialog.ui
 mirall/proxydialog.ui
 mirall/fileitemdialog.ui
+mirall/settingsdialog.ui
 )
 
 set(3rdparty_SRC
@@ -158,6 +159,7 @@ set(mirall_SRCS
     mirall/logbrowser.cpp
     mirall/proxydialog.cpp
     mirall/fileitemdialog.cpp
+    mirall/settingsdialog.cpp
 )
 
 set(mirall_HEADERS
@@ -171,6 +173,7 @@ set(mirall_HEADERS
     mirall/logbrowser.h
     mirall/proxydialog.h
     mirall/fileitemdialog.h
+    mirall/settingsdialog.h
 )
 
 if( UNIX AND NOT APPLE)
