@@ -90,6 +90,7 @@ OwncloudSetupPage::OwncloudSetupPage()
     connect( _ui.cbAdvanced, SIGNAL(stateChanged (int)), SLOT(slotToggleAdvanced(int)));
     _ui.errorLabel->setVisible(false);
     _ui.advancedBox->setVisible(false);
+    _ui.urlLabel->setVisible(false);
 
     _progressIndi = new QProgressIndicator;
     _ui.progressLayout->addWidget( _progressIndi );
@@ -169,22 +170,21 @@ void OwncloudSetupPage::setupCustomization()
 void OwncloudSetupPage::handleNewOcUrl(const QString& ocUrl)
 {
     QString url = ocUrl;
-#if 0
     int len = 0;
+    bool visible = false;
+
     if (url.startsWith(QLatin1String("https://"))) {
-        len = 8;
+        _ui.urlLabel->setPixmap( QPixmap(":/mirall/resources/security-high.png"));
+        _ui.urlLabel->setToolTip(tr("This url is secure. You can use it."));
+        visible = true;
     }
     if (url.startsWith(QLatin1String("http://"))) {
-        len = 7;
+        _ui.urlLabel->setPixmap( QPixmap(":/mirall/resources/security-low.png"));
+        _ui.urlLabel->setToolTip(tr("This url is NOT secure. You should not use it."));
+        visible = true;
     }
-    if( len ) {
-        int pos = _ui.leUrl->cursorPosition();
-        url.remove(0, len);
-        _ui.leUrl->setText(url);
-        _ui.leUrl->setCursorPosition(qMax(0, pos-len));
+    _ui.urlLabel->setVisible( visible );
 
-    }
-#endif
 }
 
 bool OwncloudSetupPage::isComplete() const

@@ -14,5 +14,8 @@
         <file>resources/view-refresh.png</file>
         <file>resources/logo.svg</file>
         <file>resources/owncloud_logo.png</file>
+        <file>resources/security-high.png</file>
+        <file>resources/security-low.png</file>
+
     </qresource>
 </RCC>

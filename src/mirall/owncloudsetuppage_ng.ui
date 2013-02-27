@@ -40,14 +40,25 @@
       </widget>
      </item>
      <item row="0" column="1">
-      <widget class="QLineEdit" name="leUrl">
-       <property name="toolTip">
-        <string>Enter the url of the ownCloud you want to connect to (without http or https).</string>
-       </property>
-       <property name="placeholderText">
-        <string>https://</string>
-       </property>
-      </widget>
+      <layout class="QHBoxLayout" name="horizontalLayout_3">
+       <item>
+        <widget class="QLineEdit" name="leUrl">
+         <property name="toolTip">
+          <string>Enter the url of the ownCloud you want to connect to (without http or https).</string>
+         </property>
+         <property name="placeholderText">
+          <string>https://</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="urlLabel">
+         <property name="text">
+          <string>url</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </item>
      <item row="1" column="0">
       <widget class="QLabel" name="label_2">
@@ -60,17 +71,34 @@
       </widget>
      </item>
      <item row="1" column="1">
-      <widget class="QLineEdit" name="leUsername">
-       <property name="toolTip">
-        <string>Enter the ownCloud username.</string>
-       </property>
-       <property name="text">
-        <string>kf</string>
-       </property>
-       <property name="placeholderText">
-        <string/>
-       </property>
-      </widget>
+      <layout class="QHBoxLayout" name="horizontalLayout_5">
+       <item>
+        <widget class="QLineEdit" name="leUsername">
+         <property name="toolTip">
+          <string>Enter the ownCloud username.</string>
+         </property>
+         <property name="text">
+          <string>kf</string>
+         </property>
+         <property name="placeholderText">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
      </item>
      <item row="2" column="0">
       <widget class="QLabel" name="label_4">
@@ -83,17 +111,34 @@
       </widget>
      </item>
      <item row="2" column="1">
-      <widget class="QLineEdit" name="lePassword">
-       <property name="toolTip">
-        <string>Enter the ownCloud password.</string>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-       <property name="echoMode">
-        <enum>QLineEdit::Password</enum>
-       </property>
-      </widget>
+      <layout class="QHBoxLayout" name="horizontalLayout_4">
+       <item>
+        <widget class="QLineEdit" name="lePassword">
+         <property name="toolTip">
+          <string>Enter the ownCloud password.</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="echoMode">
+          <enum>QLineEdit::Password</enum>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer_2">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
      </item>
      <item row="3" column="1">
       <layout class="QHBoxLayout" name="progressLayout">
@@ -235,13 +280,6 @@
      </item>
     </layout>
    </item>
-   <item row="4" column="0">
-    <widget class="QLabel" name="bottomLabel">
-     <property name="text">
-      <string>TextLabel</string>
-     </property>
-    </widget>
-   </item>
    <item row="3" column="0">
     <spacer name="verticalSpacer">
      <property name="orientation">
@@ -254,6 +292,13 @@
       </size>
      </property>
     </spacer>
+   </item>
+   <item row="4" column="0">
+    <widget class="QLabel" name="bottomLabel">
+     <property name="text">
+      <string>TextLabel</string>
+     </property>
+    </widget>
    </item>
   </layout>
  </widget>
