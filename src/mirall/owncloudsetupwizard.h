@@ -21,6 +21,7 @@
 #include <QPointer>
 
 #include "mirall/owncloudwizard.h"
+#include "mirall/connectionvalidator.h"
 #include "mirall/theme.h"
 
 namespace Mirall {
@@ -68,17 +69,16 @@ protected slots:
     // wizard dialog signals
     void slotConnectToOCUrl( const QString& );
 
-    void slotCreateRemoteFolder(bool);
+   // void slotCreateRemoteFolder(bool);
 
 private slots:
-    void slotOwnCloudFound( const QString&, const QString&, const QString&, const QString& );
-    void slotNoOwnCloudFound( QNetworkReply* );
-    void slotCreateRemoteFolderFinished( QNetworkReply::NetworkError );
     void slotAssistantFinished( int );
     void slotClearPendingRequests();
 
+    void slotConnectionResult( ConnectionValidator::Status );
+    void showMsg(const QString&, const QString&);
 private:
-    bool createRemoteFolder( const QString& );
+    //    bool createRemoteFolder( const QString& );
     void finalizeSetup( bool );
 
     /* Start a request to the newly installed ownCloud to check the connection */
@@ -88,7 +88,7 @@ private:
     QPointer<QNetworkReply>  _mkdirRequestReply;
     QPointer<QNetworkReply>  _checkInstallationRequest;
     FolderMan      *_folderMan;
-
+    ConnectionValidator *_conValidator;
     QString         _configHandle;
     QString         _localFolder;
     QString         _remoteFolder;

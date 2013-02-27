@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>510</width>
-    <height>283</height>
+    <height>289</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -27,11 +27,8 @@
      </property>
     </widget>
    </item>
-   <item row="1" column="0">
+   <item row="1" column="0" colspan="2">
     <layout class="QFormLayout" name="formLayout">
-     <property name="bottomMargin">
-      <number>10</number>
-     </property>
      <item row="0" column="0">
       <widget class="QLabel" name="serverAddressLabel">
        <property name="text">
@@ -98,16 +95,22 @@
        </property>
       </widget>
      </item>
+     <item row="3" column="1">
+      <widget class="QLabel" name="errorLabel">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Maximum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>TextLabel</string>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
-   <item row="2" column="0">
-    <widget class="QLabel" name="errorLabel">
-     <property name="text">
-      <string>TextLabel</string>
-     </property>
-    </widget>
-   </item>
-   <item row="3" column="0">
+   <item row="2" column="0" colspan="2">
     <layout class="QVBoxLayout" name="verticalLayout">
      <property name="topMargin">
       <number>10</number>
@@ -178,7 +181,7 @@
           <item>
            <widget class="QPushButton" name="pbBoxMode">
             <property name="text">
-             <string>Sync Whole &amp;ownCloud</string>
+             <string>Sync Entire &amp;Account</string>
             </property>
             <property name="checkable">
              <bool>true</bool>
@@ -203,12 +206,19 @@
           </item>
          </layout>
         </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="syncModeLabel">
+          <property name="text">
+           <string>This will sync your whole ownCloud to the local folder XY</string>
+          </property>
+         </widget>
+        </item>
        </layout>
       </widget>
      </item>
     </layout>
    </item>
-   <item row="4" column="0">
+   <item row="3" column="1">
     <spacer name="verticalSpacer">
      <property name="orientation">
       <enum>Qt::Vertical</enum>
@@ -221,7 +231,7 @@
      </property>
     </spacer>
    </item>
-   <item row="5" column="0">
+   <item row="4" column="0">
     <widget class="QLabel" name="bottomLabel">
      <property name="text">
       <string>TextLabel</string>

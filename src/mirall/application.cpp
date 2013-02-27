@@ -167,17 +167,23 @@ Application::Application(int &argc, char **argv) :
     QObject::connect( this, SIGNAL(messageReceived(QString)),
                          this, SLOT(slotOpenStatus()) );
 
-    QTimer::singleShot( 0, this, SLOT( slotStartFolderSetup() ));
-
+    // Check if the update check should be done.
     MirallConfigFile cfg;
     if( !cfg.ownCloudSkipUpdateCheck() ) {
         QTimer::singleShot( 3000, this, SLOT( slotStartUpdateDetector() ));
     }
 
+    // Catch the SSL problems that could happen during network in ownCloudInfo
     connect( ownCloudInfo::instance(), SIGNAL(sslFailed(QNetworkReply*, QList<QSslError>)),
              this,SLOT(slotSSLFailed(QNetworkReply*, QList<QSslError>)));
 
-    qDebug() << "Network Location: " << NetworkLocation::currentLocation().encoded();
+    // Validate the connection.
+    _conValidator = new ConnectionValidator;
+    connect( _conValidator, SIGNAL(connectionResult( ConnectionValidator::Status )),
+             this, SLOT(slotConValidatorResult(ConnectionValidator::Status)) );
+    _conValidator->checkConnection();
+
+    // qDebug() << "Network Location: " << NetworkLocation::currentLocation().encoded();
 }
 
 Application::~Application()
@@ -185,6 +191,8 @@ Application::~Application()
     delete _tray; // needed, see ctor
     if( _fileItemDialog) delete _fileItemDialog;
     if( _statusDialog && ! _helpOnly)  delete _statusDialog;
+    delete _conValidator;
+
     qDebug() << "* Mirall shutdown";
 }
 
@@ -192,171 +200,32 @@ void Application::slotStartUpdateDetector()
 {
     _updateDetector = new UpdateDetector(this);
     _updateDetector->versionCheck(_theme);
-
 }
 
-void Application::slotStartFolderSetup( int result )
+void Application::slotConValidatorResult(ConnectionValidator::Status status)
 {
-    if( result == QDialog::Accepted ) {
-        if( ownCloudInfo::instance()->isConfigured() ) {
-            connect( ownCloudInfo::instance(),SIGNAL(ownCloudInfoFound(QString,QString,QString,QString)),
-                     SLOT(slotOwnCloudFound(QString,QString,QString,QString)));
-
-            connect( ownCloudInfo::instance(),SIGNAL(noOwncloudFound(QNetworkReply*)),
-                     SLOT(slotNoOwnCloudFound(QNetworkReply*)));
-
-            ownCloudInfo::instance()->checkInstallation();
-        } else {
-            _owncloudSetupWizard->startWizard(true); // with intro
-        }
-    } else {
-        qDebug() << "Setup Wizard was canceled. No reparsing of config.";
-    }
-}
-
-void Application::slotOwnCloudFound( const QString& url, const QString& versionStr, const QString& version, const QString& edition)
-{
-    qDebug() << "** Application: ownCloud found: " << url << " with version " << versionStr << "(" << version << ")";
-    // now check the authentication
-    MirallConfigFile cfgFile;
-    cfgFile.setOwnCloudVersion( version );
-    // disconnect from ownCloudInfo
-    disconnect( ownCloudInfo::instance(),SIGNAL(ownCloudInfoFound(QString,QString,QString,QString)),
-                this, SLOT(slotOwnCloudFound(QString,QString,QString,QString)));
-
-    disconnect( ownCloudInfo::instance(),SIGNAL(noOwncloudFound(QNetworkReply*)),
-                this, SLOT(slotNoOwnCloudFound(QNetworkReply*)));
-
-    if( version.startsWith("4.0") ) {
-        QMessageBox::warning(0, tr("%1 Server Mismatch").arg(_theme->appNameGUI()),
-                             tr("<p>The configured server for this client is too old.</p>"
-                                "<p>Please update to the latest %1 server and restart the client.</p>").arg(_theme->appNameGUI()));
-        return;
-    }
-
-    QTimer::singleShot( 0, this, SLOT( slotFetchCredentials() ));
-}
-
-void Application::slotNoOwnCloudFound( QNetworkReply* reply )
-{
-    Q_UNUSED(reply)
-
-    qDebug() << "** Application: NO ownCloud found! Going offline";
-
-    _actionAddFolder->setEnabled( false );
-
-    // Disconnect.
-    disconnect( ownCloudInfo::instance(),SIGNAL(ownCloudInfoFound(QString,QString,QString,QString)),
-                this, SLOT(slotOwnCloudFound(QString,QString,QString,QString)));
-
-    disconnect( ownCloudInfo::instance(),SIGNAL(noOwncloudFound(QNetworkReply*)),
-                this, SLOT(slotNoOwnCloudFound(QNetworkReply*)));
-
-    disconnect( ownCloudInfo::instance(),SIGNAL(ownCloudDirExists(QString,QNetworkReply*)),
-                this,SLOT(slotAuthCheck(QString,QNetworkReply*)));
+    qDebug() << "Connection Validator Result: " << _conValidator->statusString(status);
+    int cnt = 0;
+    QString trayMsg, trayHeader;
 
     setupContextMenu();
-    QTimer::singleShot( 30*1000, this, SLOT( slotStartFolderSetup() ));
-}
+    // FIXME: handle action enable correctly.
+    _actionAddFolder->setEnabled( false );
+    _actionOpenStatus->setEnabled( false );
+    _actionAddFolder->setEnabled( false );
 
-void Application::slotFetchCredentials()
-{
-    QString trayMessage;
-
-    if( CredentialStore::instance()->canTryAgain() ) {
-        connect( CredentialStore::instance(), SIGNAL(fetchCredentialsFinished(bool)),
-                 this, SLOT(slotCredentialsFetched(bool)) );
-        CredentialStore::instance()->fetchCredentials();
-        if( CredentialStore::instance()->state() == CredentialStore::TooManyAttempts ) {
-            trayMessage = tr("Too many attempts to get a valid password.");
-        }
-    } else {
-        qDebug() << "Can not try again to fetch Credentials.";
-        trayMessage = tr("%1 user credentials are wrong. Please check configuration.")
-                .arg(Theme::instance()->appNameGUI());
-    }
-
-    if( !trayMessage.isEmpty() ) {
-        _tray->showMessage(tr("Credentials"), trayMessage);
-        _actionOpenStatus->setEnabled( false );
-        _actionAddFolder->setEnabled( false );
-    }
-}
-
-void Application::slotCredentialsFetched(bool ok)
-{
-    qDebug() << "Credentials successfully fetched: " << ok;
-    if( ! ok ) {
-        QString trayMessage;
-        trayMessage = tr("Error: Could not retrieve the password!");
-        if( CredentialStore::instance()->state() == CredentialStore::UserCanceled ) {
-            trayMessage = tr("Password dialog was canceled!");
-        } else {
-            trayMessage = CredentialStore::instance()->errorMessage();
-        }
-
-        if( !trayMessage.isEmpty() ) {
-            _tray->showMessage(tr("Credentials"), trayMessage);
-        }
-
-        qDebug() << "Could not fetch credentials";
-        _actionAddFolder->setEnabled( false );
-        _actionOpenStatus->setEnabled( false );
-    } else {
-        ownCloudInfo::instance()->setCredentials( CredentialStore::instance()->user(),
-                                                  CredentialStore::instance()->password() );
-        // Credential fetched ok.
-        QTimer::singleShot( 0, this, SLOT( slotCheckAuthentication() ));
-    }
-    disconnect( CredentialStore::instance(), SIGNAL(fetchCredentialsFinished(bool)) );
-}
-
-void Application::slotCheckAuthentication()
-{
-    connect( ownCloudInfo::instance(),SIGNAL(ownCloudDirExists(QString,QNetworkReply*)),
-             this,SLOT(slotAuthCheck(QString,QNetworkReply*)));
-
-    qDebug() << "# checking for authentication settings.";
-    ownCloudInfo::instance()->getRequest(QLatin1String("/"), true ); // this call needs to be authenticated.
-    // simply GET the webdav root, will fail if credentials are wrong.
-    // continue in slotAuthCheck here :-)
-}
-
-void Application::slotAuthCheck( const QString& ,QNetworkReply *reply )
-{
-    bool ok = true;
-
-    if( reply->error() == QNetworkReply::AuthenticationRequiredError ) { // returned if the user is wrong.
-        qDebug() << "******** Password is wrong!";
-        QMessageBox::warning(0, tr("No %1 Connection").arg(_theme->appNameGUI()),
-                             tr("<p>Your %1 credentials are not correct.</p>"
-                                "<p>Please correct them by starting the configuration dialog from the tray!</p>")
-                             .arg(_theme->appNameGUI()));
-        _actionAddFolder->setEnabled( false );
-        ok = false;
-    } else if( reply->error() == QNetworkReply::OperationCanceledError ) {
-        // the username was wrong and ownCloudInfo was closing the request after a couple of auth tries.
-        qDebug() << "******** Username or password is wrong!";
-        QMessageBox::warning(0, tr("No %1 Connection").arg(_theme->appNameGUI()),
-                             tr("<p>Either your user name or your password are not correct.</p>"
-                                "<p>Please correct it by starting the configuration dialog from the tray!</p>"));
-        _actionAddFolder->setEnabled( false );
-        ok = false;
-    }
-
-    // disconnect from ownCloud Info signals
-    disconnect( ownCloudInfo::instance(),SIGNAL(ownCloudDirExists(QString,QNetworkReply*)),
-             this,SLOT(slotAuthCheck(QString,QNetworkReply*)));
-
-    if( ok ) {
-        qDebug() << "######## Credentials are ok!";
+    switch( status ) {
+    case ConnectionValidator::Undefined:
+        qDebug() << "Connection Validator Undefined.";
+        break;
+    case ConnectionValidator::Connected:
+        qDebug() << "Connection Validator Connected.";
         _folderMan->setSyncEnabled(true);
-        QMetaObject::invokeMethod(_folderMan, "slotScheduleFolderSync");
 
         _tray->setIcon( _theme->syncStateIcon( SyncResult::NotYetStarted, true ) );
         _tray->show();
 
-        int cnt = _folderMan->map().size();
+        cnt = _folderMan->map().size();
         if( _tray )
             _tray->showMessage(tr("%1 Sync Started").arg(_theme->appNameGUI()),
                                tr("Sync started for %1 configured sync folder(s).").arg(cnt));
@@ -364,13 +233,63 @@ void Application::slotAuthCheck( const QString& ,QNetworkReply *reply )
         // queue up the sync for all folders.
         _folderMan->slotScheduleAllFolders();
 
+        QMetaObject::invokeMethod(_folderMan, "slotScheduleFolderSync");
+
         computeOverallSyncStatus();
 
         _actionAddFolder->setEnabled( true );
         _actionOpenStatus->setEnabled( true );
         setupContextMenu();
-    } else {
-        slotFetchCredentials();
+        break;
+    case ConnectionValidator::NotConfigured:
+        qDebug() << "Connection Validator Not Configured.";
+        _owncloudSetupWizard->startWizard(true); // Setup with intro
+        break;
+    case ConnectionValidator::ServerVersionMismatch:
+        qDebug() << "Connection Validator ServerVersionMismatch.";
+        QMessageBox::warning(0, tr("%1 Server Mismatch").arg(_theme->appNameGUI()),
+                             tr("<p>The configured server for this client is too old.</p>"
+                                "<p>Please update to the latest %1 server and restart the client.</p>").arg(_theme->appNameGUI()));
+        return;
+        break;
+    case ConnectionValidator::CredentialsTooManyAttempts:
+        qDebug() << "Connection Validator Too many attempts.";
+        trayMsg = tr("Too many authentication attempts to %1.")
+                .arg(Theme::instance()->appNameGUI());
+        trayHeader = tr("Credentials");
+        break;
+    case ConnectionValidator::CredentialError:
+        qDebug() << "Connection Validator Credential Error.";
+        trayMsg = tr("Error to fetch user credentials to %1. Please check configuration.")
+                .arg(Theme::instance()->appNameGUI());
+        trayHeader = tr("Credentials");
+        break;
+    case ConnectionValidator::CredentialsUserCanceled:
+        qDebug() << "Connection Validator Credential User Canceled.";
+        trayMsg = tr("User canceled authentication request to %1")
+                .arg(Theme::instance()->appNameGUI());
+        trayHeader = tr("Credentials");
+        break;
+    case ConnectionValidator::CredentialsWrong:
+        qDebug() << "Connection Validator Credentials wrong.";
+        trayMsg = tr("%1 user credentials are wrong. Please check configuration.")
+                .arg(Theme::instance()->appNameGUI());
+        trayHeader = tr("Credentials");
+        break;
+    case ConnectionValidator::StatusNotFound:
+        qDebug() << "Connection Validator Status No Found.";
+        // Check again in a while.
+        QTimer::singleShot(30000, _conValidator, SLOT(checkConnection()));
+        break;
+    default:
+        qDebug() << "Connection Validator Undefined.";
+        break;
+    }
+
+    if( !trayMsg.isEmpty() ) {
+        _tray->showMessage(trayHeader, trayMsg);
+        _actionOpenStatus->setEnabled( false );
+        _actionAddFolder->setEnabled( false );
     }
 }
 
@@ -418,7 +337,7 @@ void Application::slotownCloudWizardDone( int res )
         _statusDialog->setFolderList( _folderMan->map() );
     }
     _folderMan->setSyncEnabled( true );
-    slotStartFolderSetup( res );
+    // slotStartFolderSetup( res );
 }
 
 void Application::setupActions()
@@ -627,7 +546,7 @@ void Application::slotTrayClicked( QSystemTrayIcon::ActivationReason reason )
     // If the user canceled login, rather open the login window.
     if( CredentialStore::instance()->state() == CredentialStore::UserCanceled ||
             CredentialStore::instance()->state() == CredentialStore::Error ) {
-        slotFetchCredentials();
+        _conValidator->checkConnection();
     }
 #if defined Q_WS_WIN || defined Q_WS_X11
     if( reason == QSystemTrayIcon::Trigger && _actionOpenStatus->isEnabled() ) {

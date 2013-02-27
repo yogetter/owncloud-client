@@ -16,16 +16,8 @@
 #include "mirall/mirallconfigfile.h"
 #include "mirall/theme.h"
 
-#include <QDebug>
-#include <QDesktopServices>
-#include <QFileDialog>
-#include <QFileInfo>
-#include <QUrl>
-#include <QValidator>
-#include <QWizardPage>
-#include <QDir>
-#include <QScrollBar>
-#include <QSslSocket>
+#include <QtCore>
+#include <QtGui>
 
 #include <stdlib.h>
 
@@ -99,14 +91,14 @@ OwncloudSetupPage::OwncloudSetupPage()
     _ui.advancedBox->setVisible(false);
 
     // Error label
-    // painter->setBrush( QColor(0xbb, 0x4d, 0x4d) );
-    // painter->setPen( QColor(0xaa, 0xaa, 0xaa));
-
-    QString style = QLatin1String("border: 1px solid red; border-radius: 4px; padding: 4px;"
-                                  "background-color: #bb4d4d; color: #ffffff;");
+    QString style = QLatin1String("border: 1px solid #eed3d7; border-radius: 5px; padding: 3px;"
+                                  "background-color: #f2dede; color: #b94a48;");
 
     _ui.errorLabel->setStyleSheet( style );
     _ui.errorLabel->setWordWrap(true);
+    setTitle( tr("<font color=\"#ffffff\" size=\"5\">Connect to your %1 Server</font>").arg( Theme::instance()->appNameGUI()));
+    setSubTitle( tr("<font color=\"#1d2d42\">Enter user credentials to access your %1</font>").arg(Theme::instance()->appNameGUI()));
+
     setupCustomization();
 }
 
@@ -146,7 +138,15 @@ void OwncloudSetupPage::setupCustomization()
 
     Theme *theme = Theme::instance();
     QVariant variant = theme->customMedia( Theme::oCSetupTop );
-    setupCustomMedia( variant, _ui.topLabel );
+    if( 0 && variant.isNull() ) {
+        // setup standard ownCloud
+        _ui.topLabel->show();
+        _ui.topLabel->setStyleSheet( "background-color: #1d2d42;");
+        _ui.topLabel->setFixedHeight( 64 );
+
+    } else {
+        setupCustomMedia( variant, _ui.topLabel );
+    }
     variant = theme->customMedia( Theme::oCSetupBottom );
     setupCustomMedia( variant, _ui.bottomLabel );
 
@@ -157,6 +157,7 @@ void OwncloudSetupPage::setupCustomization()
         _ui.leUrl->hide();
         _ui.serverAddressLabel->hide();
     }
+
 }
 
 // slot hit from textChanged of the url entry field.
@@ -214,6 +215,7 @@ bool OwncloudSetupPage::validatePage()
     bool re = false;
 
     if( ! _connected) {
+        _ui.errorLabel->setText(tr("Connecting..."));
         emit connectToOCUrl( url() );
         return false;
     } else {
@@ -319,12 +321,32 @@ OwncloudWizard::OwncloudWizard(QWidget *parent)
 
     OwncloudSetupPage *p = static_cast<OwncloudSetupPage*>(page(Page_oCSetup));
     connect( p, SIGNAL(connectToOCUrl(QString)), SIGNAL(connectToOCUrl(QString)));
+
+    QPixmap pix(QSize(600, 78));
+    pix.fill(QColor("#1d2d42"));
+    setPixmap( QWizard::BannerPixmap, pix );
+
+    QPixmap logo( ":/mirall/resources/owncloud_logo.png");
+    setPixmap( QWizard::LogoPixmap, logo );
+    setWizardStyle(QWizard::ModernStyle);
+    setOption( QWizard::NoBackButtonOnStartPage );
+    setTitleFormat(Qt::RichText);
+    setSubTitleFormat(Qt::RichText);
+
 }
 
 QString OwncloudWizard::ocUrl() const
 {
     QString url = field("OCUrl").toString().simplified();
     return url;
+}
+
+void OwncloudWizard::showConnectInfo( const QString& msg )
+{
+    OwncloudSetupPage *p = static_cast<OwncloudSetupPage*>(page(Page_oCSetup));
+    if( p ) {
+        p->setErrorString( msg );
+    }
 }
 
 void OwncloudWizard::successfullyConnected(bool enable)

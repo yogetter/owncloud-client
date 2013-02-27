@@ -93,6 +93,7 @@ public slots:
     void slotCurrentPageChanged( int );
     void showOCUrlLabel( bool );
 
+    void showConnectInfo( const QString& );
     void successfullyConnected(bool);
 
 signals:

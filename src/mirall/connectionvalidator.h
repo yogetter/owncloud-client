@@ -17,23 +17,57 @@
 #include <QObject>
 #include <QStringList>
 
+class QNetworkReply;
+
+namespace Mirall {
+
 class ConnectionValidator : public QObject
 {
     Q_OBJECT
 public:
     explicit ConnectionValidator(QObject *parent = 0);
-    explicit ConnectionValidator(const QString& connection = QString::null, QObject *parent = 0);
+    explicit ConnectionValidator(const QString& connection, QObject *parent = 0);
+
+    enum Status {
+        Undefined,
+        Connected,
+        NotConfigured,
+        ServerVersionMismatch,
+        CredentialsTooManyAttempts,
+        CredentialError,
+        CredentialsUserCanceled,
+        CredentialsWrong,
+        StatusNotFound
+
+    };
 
     QStringList errors() const;
 
+    void checkConnection();
+
+    QString statusString( Status );
+
 signals:
+    void connectionResult( ConnectionValidator::Status );
     void connectionAvailable();
     void connectionFailed();
 
 public slots:
 
+protected slots:
+    void slotStatusFound( const QString&, const QString&, const QString&, const QString& );
+    void slotNoStatusFound(QNetworkReply *);
+
+    void slotFetchCredentials();
+    void slotCredentialsFetched( bool );
+    void slotCheckAuthentication();
+    void slotAuthCheck( const QString& ,QNetworkReply * );
+
 private:
     QStringList _errors;
+    QString     _connection;
 };
+
+}
 
 #endif // CONNECTIONVALIDATOR_H

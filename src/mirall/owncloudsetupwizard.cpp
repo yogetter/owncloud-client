@@ -17,6 +17,7 @@
 #include "mirall/owncloudinfo.h"
 #include "mirall/folderman.h"
 #include "mirall/credentialstore.h"
+#include "mirall/connectionvalidator.h"
 
 #include <QtCore>
 #include <QProcess>
@@ -182,42 +183,93 @@ void OwncloudSetupWizard::testOwnCloudConnect()
         }
     }
 
-    // now start ownCloudInfo to check the connection.
-    ownCloudInfo* info = ownCloudInfo::instance();
-    info->setCustomConfigHandle( _configHandle );
-    if( info->isConfigured() ) {
-        // reset the SSL Untrust flag to let the SSL dialog appear again.
-        info->resetSSLUntrust();
-        _checkInstallationRequest = info->checkInstallation();
-    } else {
-        qDebug() << "   ownCloud seems not to be configured, can not start test connect.";
-        _ocWizard->displayError( tr("No temporar configuration found to test connect."));
+    _conValidator = new ConnectionValidator( _configHandle );
+    connect( _conValidator, SIGNAL(connectionResult(ConnectionValidator::Status)),
+             SLOT(slotConnectionResult(ConnectionValidator::Status)));
+    _conValidator->checkConnection();
+
+}
+
+void OwncloudSetupWizard::slotConnectionResult( ConnectionValidator::Status status )
+{
+    qDebug() << "Connection Validator Result: " << _conValidator->statusString(status);
+    int cnt = 0;
+    QString infoMsg, msgHeader;
+    bool connection = false;
+
+    switch( status ) {
+    case ConnectionValidator::Undefined:
+        qDebug() << "Connection Validator Undefined.";
+        break;
+    case ConnectionValidator::Connected:
+        connection = true;
+        break;
+    case ConnectionValidator::NotConfigured:
+        qDebug() << "Connection Validator Not Configured.";
+        break;
+    case ConnectionValidator::ServerVersionMismatch:
+        qDebug() << "Connection Validator ServerVersionMismatch.";
+        msgHeader = tr("%1 Server Mismatch").arg(Theme::instance()->appNameGUI());
+        infoMsg = tr("<b>Server and client are incompatible.</b> Please update the server and restart the client.");
+        return;
+        break;
+    case ConnectionValidator::CredentialsTooManyAttempts:
+        qDebug() << "Connection Validator Too many attempts.";
+        infoMsg = tr("Too many authentication attempts to %1.")
+                .arg(Theme::instance()->appNameGUI());
+        msgHeader = tr("Credentials");
+        break;
+    case ConnectionValidator::CredentialError:
+        qDebug() << "Connection Validator Credential Error.";
+        infoMsg = tr("Error to fetch user credentials to. Please check configuration.");
+        msgHeader = tr("Credentials");
+        break;
+    case ConnectionValidator::CredentialsUserCanceled:
+        qDebug() << "Connection Validator Credential User Canceled.";
+        infoMsg = tr("User canceled authentication request to %1")
+                .arg(Theme::instance()->appNameGUI());
+        msgHeader = tr("Credentials");
+        break;
+    case ConnectionValidator::CredentialsWrong:
+        qDebug() << "Connection Validator Credentials wrong.";
+        infoMsg = tr("<b>Username or password are wrong</b>. Please check again.");
+        msgHeader = tr("Credentials");
+        break;
+    case ConnectionValidator::StatusNotFound:
+        qDebug() << "Connection Validator Status No Found.";
+        // Check again in a while.
+        if( _configHandle.isEmpty() ) {
+            qDebug() << "Could not reach server, trying again.";
+            QTimer::singleShot(30000, _conValidator, SLOT(checkConnection()));
+        } else {
+            // First setup mode.
+            infoMsg = tr("<b>Server is not reachable.</b> Please check server address.");
+            msgHeader = tr("Host unreachable");
+        }
+
+        break;
+    default:
+        qDebug() << "Connection Validator Undefined.";
+        break;
     }
+
+    showMsg( msgHeader, infoMsg );
+    _ocWizard->successfullyConnected( connection );
+    _conValidator->deleteLater();
 }
 
-void OwncloudSetupWizard::slotOwnCloudFound( const QString& url, const QString& infoString, const QString& version, const QString& )
+#define QS(X) QLatin1String(X)
+
+void OwncloudSetupWizard::showMsg( const QString& header, const QString& msg)
 {
-    _ocWizard->appendToResultWidget(tr("<font color=\"green\">Successfully connected to %1: %2 version %3 (%4)</font><br/><br/>")
-                                    .arg( url ).arg(Theme::instance()->appNameGUI()).arg(infoString).arg(version));
-
-    // enable the finish button.
-    _ocWizard->button( QWizard::FinishButton )->setEnabled( true );
-
-    // start the local folder creation
-    setupSyncFolder();
+    // QString style;
+    if( header.isEmpty() || msg.isEmpty() ) return;
+    QString m; //  = QS("<h2>") + header + QS("</h2>");
+    m += QS("<p>") + msg + QS("</p>");
+    _ocWizard->showConnectInfo( m );
 }
 
-void OwncloudSetupWizard::slotNoOwnCloudFound( QNetworkReply *err )
-{
-    _ocWizard->appendToResultWidget(tr("<font color=\"red\">Failed to connect to %1!</font>")
-                                    .arg(Theme::instance()->appNameGUI()));
-    _ocWizard->appendToResultWidget(tr("Error: <tt>%1</tt>").arg(err->errorString()) );
-    _ocWizard->displayError( tr("Failed to connect to %1:<br/>%2").arg( Theme::instance()->appNameGUI()).arg(err->errorString()));
-    // remove the config file again
-    MirallConfigFile cfgFile( _configHandle );
-    cfgFile.cleanupCustomConfig();
-    finalizeSetup( false );
-}
+
 
 OwncloudWizard *OwncloudSetupWizard::wizard()
 {
@@ -253,10 +305,10 @@ void OwncloudSetupWizard::setupSyncFolder()
 
     if( localFolderOk ) {
         _remoteFolder = Theme::instance()->defaultServerFolder();
-        slotCreateRemoteFolder(true);
+        // slotCreateRemoteFolder(true);
     }
 }
-
+#if 0
 void OwncloudSetupWizard::slotCreateRemoteFolder(bool credentialsOk )
 {
     if( ! credentialsOk ) {
@@ -309,7 +361,7 @@ void OwncloudSetupWizard::slotCreateRemoteFolderFinished( QNetworkReply::Network
 
     finalizeSetup( success );
 }
-
+#endif
 void OwncloudSetupWizard::finalizeSetup( bool success )
 {
 

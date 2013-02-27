@@ -27,6 +27,7 @@
 #include "mirall/logbrowser.h"
 #include "mirall/folderman.h"
 #include "mirall/fileitemdialog.h"
+#include "mirall/connectionvalidator.h"
 
 class QAction;
 class QMenu;
@@ -87,18 +88,12 @@ protected slots:
     void slotTrayClicked( QSystemTrayIcon::ActivationReason );
     void slotFolderOpenAction(const QString & );
     void slotOpenOwnCloud();
-    void slotStartFolderSetup(int result = QDialog::Accepted); // defaulting to Accepted
-    void slotOwnCloudFound( const QString&, const QString&, const QString&, const QString& );
-    void slotNoOwnCloudFound( QNetworkReply* );
-    void slotCheckAuthentication();
-    void slotAuthCheck( const QString& ,QNetworkReply* );
     void slotOpenLogBrowser();
     void slotAbout();
     void slotSSLFailed( QNetworkReply *reply, QList<QSslError> errors );
-    void slotFetchCredentials();
-    void slotCredentialsFetched( bool );
     void slotStartUpdateDetector();
 
+    void slotConValidatorResult(ConnectionValidator::Status);
 private:
     void setHelp();
     void raiseDialog( QWidget* );
@@ -132,6 +127,8 @@ private:
     UpdateDetector *_updateDetector;
     QMap<QString, QString> _overallStatusStrings;
     LogBrowser *_logBrowser;
+    ConnectionValidator* _conValidator;
+
     QString _logFile;
     bool _showLogWindow;
     bool _logFlush;
