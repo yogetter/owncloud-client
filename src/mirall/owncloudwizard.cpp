@@ -15,6 +15,7 @@
 #include "mirall/owncloudwizard.h"
 #include "mirall/mirallconfigfile.h"
 #include "mirall/theme.h"
+#include <QProgressIndicator.h>
 
 #include <QtCore>
 #include <QtGui>
@@ -90,6 +91,9 @@ OwncloudSetupPage::OwncloudSetupPage()
     _ui.errorLabel->setVisible(false);
     _ui.advancedBox->setVisible(false);
 
+    _progressIndi = new QProgressIndicator;
+    _ui.progressLayout->addWidget( _progressIndi );
+
     // Error label
     QString style = QLatin1String("border: 1px solid #eed3d7; border-radius: 5px; padding: 3px;"
                                   "background-color: #f2dede; color: #b94a48;");
@@ -104,6 +108,7 @@ OwncloudSetupPage::OwncloudSetupPage()
 
 OwncloudSetupPage::~OwncloudSetupPage()
 {
+    delete _progressIndi;
 }
 
 void OwncloudSetupPage::slotToggleAdvanced(int state)
@@ -215,11 +220,13 @@ bool OwncloudSetupPage::validatePage()
     bool re = false;
 
     if( ! _connected) {
+        _progressIndi->startAnimation();
         _ui.errorLabel->setText(tr("Connecting..."));
         emit connectToOCUrl( url() );
         return false;
     } else {
         // connecting is running
+        _progressIndi->stopAnimation();
         return true;
     }
 }
@@ -232,6 +239,7 @@ void OwncloudSetupPage::setErrorString( const QString& err )
         _ui.errorLabel->setVisible(true);
         _ui.errorLabel->setText(err);
     }
+    _progressIndi->stopAnimation();
 }
 
 // ======================================================================

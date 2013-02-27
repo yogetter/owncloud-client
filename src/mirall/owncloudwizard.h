@@ -23,6 +23,7 @@
 
 class QLabel;
 class QVariant;
+class QProgressIndicator;
 
 namespace Mirall {
 
@@ -58,6 +59,7 @@ private:
   Ui_OwncloudSetupPage _ui;
   QString _oCUrl;
   bool    _connected;
+  QProgressIndicator *_progressIndi;
 };
 
 class OwncloudWizard: public QWizard
@@ -104,6 +106,7 @@ private:
     QString _configFile;
     QString _oCUrl;
     QString _oCUser;
+
 };
 
 
