@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>510</width>
+    <width>480</width>
     <height>322</height>
    </rect>
   </property>
@@ -14,20 +14,7 @@
    <string>Form</string>
   </property>
   <layout class="QGridLayout" name="gridLayout_2">
-   <item row="0" column="0">
-    <widget class="QLabel" name="topLabel">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="text">
-      <string>TextLabel</string>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="0">
+   <item row="1" column="0" colspan="2">
     <layout class="QFormLayout" name="formLayout">
      <item row="0" column="0">
       <widget class="QLabel" name="serverAddressLabel">
@@ -40,21 +27,20 @@
       </widget>
      </item>
      <item row="0" column="1">
-      <layout class="QHBoxLayout" name="horizontalLayout_3">
+      <layout class="QHBoxLayout" name="addressLayout">
        <item>
         <widget class="QLineEdit" name="leUrl">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="toolTip">
           <string>Enter the url of the ownCloud you want to connect to (without http or https).</string>
          </property>
          <property name="placeholderText">
           <string>https://</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLabel" name="urlLabel">
-         <property name="text">
-          <string>url</string>
          </property>
         </widget>
        </item>
@@ -85,19 +71,6 @@
          </property>
         </widget>
        </item>
-       <item>
-        <spacer name="horizontalSpacer">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>40</width>
-           <height>20</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
       </layout>
      </item>
      <item row="2" column="0">
@@ -125,19 +98,6 @@
          </property>
         </widget>
        </item>
-       <item>
-        <spacer name="horizontalSpacer_2">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>40</width>
-           <height>20</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
       </layout>
      </item>
      <item row="3" column="1">
@@ -155,24 +115,11 @@
          </property>
         </widget>
        </item>
-       <item>
-        <widget class="QLabel" name="label_3">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
       </layout>
      </item>
     </layout>
    </item>
-   <item row="2" column="0">
+   <item row="2" column="0" colspan="2">
     <layout class="QVBoxLayout" name="verticalLayout">
      <property name="topMargin">
       <number>10</number>
@@ -202,12 +149,9 @@
         <bool>true</bool>
        </property>
        <layout class="QGridLayout" name="gridLayout">
-        <property name="margin">
-         <number>0</number>
-        </property>
         <item row="0" column="0">
-         <layout class="QHBoxLayout" name="horizontalLayout">
-          <item>
+         <layout class="QFormLayout" name="formLayout_2">
+          <item row="0" column="0">
            <widget class="QLabel" name="label">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
@@ -219,12 +163,12 @@
              <string>&amp;Local Folder</string>
             </property>
             <property name="buddy">
-             <cstring>_pbFileSelect</cstring>
+             <cstring>pbSelectLocalFolder</cstring>
             </property>
            </widget>
           </item>
-          <item>
-           <widget class="QPushButton" name="_pbFileSelect">
+          <item row="0" column="1">
+           <widget class="QPushButton" name="pbSelectLocalFolder">
             <property name="sizePolicy">
              <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -236,51 +180,76 @@
             </property>
            </widget>
           </item>
-         </layout>
-        </item>
-        <item row="1" column="0">
-         <layout class="QHBoxLayout" name="horizontalLayout_2">
-          <item>
-           <widget class="QPushButton" name="pbBoxMode">
+          <item row="1" column="0">
+           <widget class="QLabel" name="selectiveSyncLabel">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="text">
-             <string>Sync Entire &amp;Account</string>
-            </property>
-            <property name="checkable">
-             <bool>true</bool>
-            </property>
-            <property name="checked">
-             <bool>true</bool>
-            </property>
-            <property name="flat">
-             <bool>false</bool>
+             <string>Selective Sync:</string>
             </property>
            </widget>
           </item>
-          <item>
-           <widget class="QPushButton" name="pbContentMode">
+          <item row="1" column="1">
+           <layout class="QHBoxLayout" name="selectiveSyncLayout">
+            <item>
+             <widget class="QPushButton" name="pbBoxMode">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>Sync Entire &amp;Account</string>
+              </property>
+              <property name="checkable">
+               <bool>true</bool>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+              <property name="flat">
+               <bool>false</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pbSelectiveMode">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>Choose &amp;Folders</string>
+              </property>
+              <property name="checkable">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item row="2" column="1">
+           <widget class="QLabel" name="syncModeLabel">
             <property name="text">
-             <string>Choose &amp;Folders</string>
-            </property>
-            <property name="checkable">
-             <bool>true</bool>
+             <string>Your whole ownCloud will be synced to the local folder.</string>
             </property>
            </widget>
           </item>
          </layout>
-        </item>
-        <item row="2" column="0">
-         <widget class="QLabel" name="syncModeLabel">
-          <property name="text">
-           <string>This will sync your whole ownCloud to the local folder XY</string>
-          </property>
-         </widget>
         </item>
        </layout>
       </widget>
      </item>
     </layout>
    </item>
-   <item row="3" column="0">
+   <item row="4" column="1">
     <spacer name="verticalSpacer">
      <property name="orientation">
       <enum>Qt::Vertical</enum>
@@ -288,12 +257,25 @@
      <property name="sizeHint" stdset="0">
       <size>
        <width>20</width>
-       <height>103</height>
+       <height>43</height>
       </size>
      </property>
     </spacer>
    </item>
-   <item row="4" column="0">
+   <item row="0" column="0">
+    <widget class="QLabel" name="topLabel">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="text">
+      <string>TextLabel</string>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="0">
     <widget class="QLabel" name="bottomLabel">
      <property name="text">
       <string>TextLabel</string>

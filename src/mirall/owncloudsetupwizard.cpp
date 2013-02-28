@@ -63,6 +63,7 @@ void OwncloudSetupWizard::startWizard(bool intro)
     connect(ownCloudInfo::instance(),SIGNAL(webdavColCreated(QNetworkReply::NetworkError)),
             SLOT(slotCreateRemoteFolderFinished(QNetworkReply::NetworkError)));
 
+    // Set useful default values.
     MirallConfigFile cfgFile;
     // Fill the entry fields with existing values.
     QString url = cfgFile.ownCloudUrl();
@@ -74,10 +75,16 @@ void OwncloudSetupWizard::startWizard(bool intro)
         _ocWizard->setOCUser( user );
     }
 
+    QString d( QDir::homePath()+QLatin1Char('/')+Theme::instance()->defaultClientFolder() );
+
+    QString localPath = QDir::toNativeSeparators(d);
+    _ocWizard->setLocalFolder( localPath );
+
     if (intro)
         _ocWizard->setStartId(OwncloudWizard::Page_oCWelcome);
     else
         _ocWizard->setStartId(OwncloudWizard::Page_oCSetup);
+
     _ocWizard->restart();
     _ocWizard->show();
 }
@@ -278,17 +285,28 @@ OwncloudWizard *OwncloudSetupWizard::wizard()
 
 void OwncloudSetupWizard::setupSyncFolder()
 {
-    _localFolder = QDir::homePath() + QDir::separator() + Theme::instance()->defaultClientFolder();
+    if( ! _folderMan ) {
+        qDebug() << "Folderman is not known!";
+        return;
+    }
 
-    if( ! _folderMan ) return;
+    _localFolder = _ocWizard->selectedLocalFolder();
+    _remoteFolder = QString::null;
+
+    if( _ocWizard->syncMode() == OwncloudSetupPage::BoxMode ) {
+        _remoteFolder = QLatin1String("/");
+    } else {
+        qDebug() << "Not yet implemented!";
+    }
 
     qDebug() << "Setup local sync folder for new oC connection " << _localFolder;
     QDir fi( _localFolder );
 
+    // check and create local folder if it does not exist.
     bool localFolderOk = true;
     if( fi.exists() ) {
-        // there is an existing local folder. If its non empty, it can only be synced if the
-        // ownCloud is newly created.
+        // there is an existing local folder.
+        // FIXME: Check if the local folder is writeable.
         _ocWizard->appendToResultWidget( tr("Local sync folder %1 already exists, setting it up for sync.<br/><br/>").arg(_localFolder));
     } else {
         QString res = tr("Creating local sync folder %1... ").arg(_localFolder);
@@ -302,66 +320,9 @@ void OwncloudSetupWizard::setupSyncFolder()
         }
         _ocWizard->appendToResultWidget( res );
     }
-
-    if( localFolderOk ) {
-        _remoteFolder = Theme::instance()->defaultServerFolder();
-        // slotCreateRemoteFolder(true);
-    }
-}
-#if 0
-void OwncloudSetupWizard::slotCreateRemoteFolder(bool credentialsOk )
-{
-    if( ! credentialsOk ) {
-        // User pressed cancel while being asked for password.
-        _ocWizard->appendToResultWidget("User canceled password dialog. Can not connect.");
-        return;
-    }
-
-    if( createRemoteFolder( _remoteFolder ) ) {
-        qDebug() << "Started remote folder creation ok";
-    } else {
-        _ocWizard->appendToResultWidget(tr("Creation of remote folder %1 could not be started.").arg(_remoteFolder));
-    }
+    finalizeSetup( (!_remoteFolder.isEmpty()) && localFolderOk );
 }
 
-bool OwncloudSetupWizard::createRemoteFolder( const QString& folder )
-{
-    if( folder.isEmpty() ) return false;
-
-    qDebug() << "creating folder on ownCloud: " << folder;
-
-    _mkdirRequestReply = ownCloudInfo::instance()->mkdirRequest( folder );
-
-    return true;
-}
-
-void OwncloudSetupWizard::slotCreateRemoteFolderFinished( QNetworkReply::NetworkError error )
-{
-    qDebug() << "** webdav mkdir request finished " << error;
-    bool success = true;
-
-    if( error == QNetworkReply::NoError ) {
-        _ocWizard->appendToResultWidget( tr("Remote folder %1 created successfully.").arg(_remoteFolder));
-    } else if( error == 202 ) {
-        _ocWizard->appendToResultWidget( tr("The remote folder %1 already exists. Connecting it for syncing.").arg(_remoteFolder));
-    } else if( error > 202 && error < 300 ) {
-        _ocWizard->appendToResultWidget( tr("The folder creation resulted in HTTP error code %1").arg((int)error) );
-    } else if( error == QNetworkReply::OperationCanceledError ) {
-        _ocWizard->appendToResultWidget( tr("<p><font color=\"red\">Remote folder creation failed probably because the provided credentials are wrong.</font>"
-                                            "<br/>Please go back and check your credentials.</p>"));
-        _localFolder.clear();
-        _remoteFolder.clear();
-        success = false;
-    } else {
-        _ocWizard->appendToResultWidget( tr("Remote folder %1 creation failed with error <tt>%2</tt>.").arg(_remoteFolder).arg(error));
-        _localFolder.clear();
-        _remoteFolder.clear();
-        success = false;
-    }
-
-    finalizeSetup( success );
-}
-#endif
 void OwncloudSetupWizard::finalizeSetup( bool success )
 {
 

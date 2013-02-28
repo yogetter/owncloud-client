@@ -88,12 +88,13 @@ OwncloudSetupPage::OwncloudSetupPage()
     connect( _ui.lePassword, SIGNAL(textChanged(QString)), this, SIGNAL(completeChanged()));
     connect( _ui.leUsername, SIGNAL(textChanged(QString)), this, SIGNAL(completeChanged()));
     connect( _ui.cbAdvanced, SIGNAL(stateChanged (int)), SLOT(slotToggleAdvanced(int)));
+
     _ui.errorLabel->setVisible(false);
     _ui.advancedBox->setVisible(false);
-    _ui.urlLabel->setVisible(false);
 
     _progressIndi = new QProgressIndicator;
-    _ui.progressLayout->addWidget( _progressIndi );
+    _ui.addressLayout->addWidget( _progressIndi );
+    _progressIndi->setVisible(false);
 
     // Error label
     QString style = QLatin1String("border: 1px solid #eed3d7; border-radius: 5px; padding: 3px;"
@@ -104,6 +105,16 @@ OwncloudSetupPage::OwncloudSetupPage()
     setTitle( tr("<font color=\"#ffffff\" size=\"5\">Connect to your %1 Server</font>").arg( Theme::instance()->appNameGUI()));
     setSubTitle( tr("<font color=\"#1d2d42\">Enter user credentials to access your %1</font>").arg(Theme::instance()->appNameGUI()));
 
+    // ButtonGroup for
+    _selectiveSyncButtons = new QButtonGroup;
+    _selectiveSyncButtons->addButton( _ui.pbBoxMode );
+    _selectiveSyncButtons->addButton( _ui.pbSelectiveMode );
+    connect( _selectiveSyncButtons, SIGNAL(buttonClicked (QAbstractButton*)),
+             SLOT(slotChangedSelective(QAbstractButton*)));
+
+    _ui.selectiveSyncLabel->setVisible(false);
+    _ui.pbBoxMode->setVisible(false);
+    _ui.pbSelectiveMode->setVisible(false);
     setupCustomization();
 }
 
@@ -115,6 +126,15 @@ OwncloudSetupPage::~OwncloudSetupPage()
 void OwncloudSetupPage::slotToggleAdvanced(int state)
 {
     _ui.advancedBox->setVisible( state == Qt::Checked );
+}
+
+void OwncloudSetupPage::slotChangedSelective(QAbstractButton* button)
+{
+    if( button = _ui.pbBoxMode ) {
+        // box mode - sync the entire oC
+    } else {
+        // content mode, select folder list.
+    }
 }
 
 void OwncloudSetupPage::setOCUser( const QString & user )
@@ -172,7 +192,7 @@ void OwncloudSetupPage::handleNewOcUrl(const QString& ocUrl)
     QString url = ocUrl;
     int len = 0;
     bool visible = false;
-
+#if 0
     if (url.startsWith(QLatin1String("https://"))) {
         _ui.urlLabel->setPixmap( QPixmap(":/mirall/resources/security-high.png"));
         _ui.urlLabel->setToolTip(tr("This url is secure. You can use it."));
@@ -183,7 +203,7 @@ void OwncloudSetupPage::handleNewOcUrl(const QString& ocUrl)
         _ui.urlLabel->setToolTip(tr("This url is NOT secure. You should not use it."));
         visible = true;
     }
-    _ui.urlLabel->setVisible( visible );
+#endif
 
 }
 
@@ -220,15 +240,16 @@ bool OwncloudSetupPage::validatePage()
     bool re = false;
 
     if( ! _connected) {
+        _progressIndi->setVisible(true);
         _progressIndi->startAnimation();
-        _ui.errorLabel->setText(tr("Connecting..."));
         emit connectToOCUrl( url() );
         return false;
     } else {
         // connecting is running
-        _progressIndi->stopAnimation();
+        stopSpinner();
         return true;
     }
+    // _ui.addressLayout->invalidate();
 }
 
 void OwncloudSetupPage::setErrorString( const QString& err )
@@ -239,7 +260,34 @@ void OwncloudSetupPage::setErrorString( const QString& err )
         _ui.errorLabel->setVisible(true);
         _ui.errorLabel->setText(err);
     }
+    stopSpinner();
+}
+
+void OwncloudSetupPage::stopSpinner()
+{
+    // _ui.addressLayout->removeWidget( _progressIndi );
+
+    _progressIndi->setVisible(false);
     _progressIndi->stopAnimation();
+}
+
+OwncloudSetupPage::SyncMode OwncloudSetupPage::syncMode()
+{
+    if( _selectiveSyncButtons->checkedButton() &&
+            _selectiveSyncButtons->checkedButton() == _ui.pbSelectiveMode ) {
+        return SelectiveMode;
+    }
+    return BoxMode;
+}
+
+void OwncloudSetupPage::setLocalFolder( const QString& folder )
+{
+    _ui.pbSelectLocalFolder->setText(folder);
+}
+
+QString OwncloudSetupPage::selectedLocalFolder() const
+{
+    return _ui.pbSelectLocalFolder->text();
 }
 
 // ======================================================================
@@ -330,7 +378,7 @@ OwncloudWizard::OwncloudWizard(QWidget *parent)
     OwncloudSetupPage *p = static_cast<OwncloudSetupPage*>(page(Page_oCSetup));
     connect( p, SIGNAL(connectToOCUrl(QString)), SIGNAL(connectToOCUrl(QString)));
 
-    QPixmap pix(QSize(600, 78));
+    QPixmap pix(QSize(540, 78));
     pix.fill(QColor("#1d2d42"));
     setPixmap( QWizard::BannerPixmap, pix );
 
@@ -347,6 +395,18 @@ QString OwncloudWizard::ocUrl() const
 {
     QString url = field("OCUrl").toString().simplified();
     return url;
+}
+
+void OwncloudWizard::setLocalFolder( const QString& folder )
+{
+    OwncloudSetupPage *p = static_cast<OwncloudSetupPage*>(page(Page_oCSetup));
+    p->setLocalFolder(folder);
+}
+
+QString OwncloudWizard::selectedLocalFolder() const
+{
+    OwncloudSetupPage *p = static_cast<OwncloudSetupPage*>(page(Page_oCSetup));
+    return p->selectedLocalFolder();
 }
 
 void OwncloudWizard::showConnectInfo( const QString& msg )
@@ -408,11 +468,7 @@ void OwncloudWizard::appendToResultWidget( const QString& msg, LogType type )
 void OwncloudWizard::setOCUrl( const QString& url )
 {
   _oCUrl = url;
-#ifdef OWNCLOUD_CLIENT
   OwncloudSetupPage *p = static_cast<OwncloudSetupPage*>(page(Page_oCSetup));
-#else
-  OwncloudWizardSelectTypePage *p = static_cast<OwncloudWizardSelectTypePage*>(page( Page_SelectType ));
-#endif
   if( p )
       p->setOCUrl( url );
 
@@ -428,6 +484,14 @@ void OwncloudWizard::setOCUser( const QString& user )
 #else
   OwncloudWizardSelectTypePage *p = static_cast<OwncloudWizardSelectTypePage*>(page( Page_SelectType ));
 #endif
+}
+
+OwncloudSetupPage::SyncMode OwncloudWizard::syncMode()
+{
+    OwncloudSetupPage *p = static_cast<OwncloudSetupPage*>(page(Page_oCSetup));
+    if( p )
+        return p->syncMode();
+    return OwncloudSetupPage::BoxMode;
 }
 
 } // end namespace

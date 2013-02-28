@@ -34,6 +34,11 @@ public:
   OwncloudSetupPage();
   ~OwncloudSetupPage();
 
+  enum SyncMode {
+      SelectiveMode,
+      BoxMode
+  };
+
   virtual bool isComplete() const;
   virtual void initializePage();
   virtual int nextId() const;
@@ -43,14 +48,20 @@ public:
   bool validatePage();
   QString url() const;
   void setConnected(bool complete);
+  QString selectedLocalFolder() const;
+  void setLocalFolder( const QString& );
+
+  SyncMode syncMode();
 
 public slots:
   void setErrorString( const QString&  );
+  void stopSpinner();
 
 protected slots:
   void handleNewOcUrl(const QString& ocUrl);
   void setupCustomization();
   void slotToggleAdvanced(int state);
+  void slotChangedSelective(QAbstractButton*);
 
 signals:
   void connectToOCUrl( const QString& );
@@ -60,6 +71,7 @@ private:
   QString _oCUrl;
   bool    _connected;
   QProgressIndicator *_progressIndi;
+  QButtonGroup       *_selectiveSyncButtons;
 };
 
 class OwncloudWizard: public QWizard
@@ -89,6 +101,10 @@ public:
     void enableFinishOnResultWidget(bool enable);
 
     void displayError( const QString& );
+    OwncloudSetupPage::SyncMode syncMode();
+
+    void setLocalFolder( const QString& );
+    QString selectedLocalFolder() const;
 
 public slots:
     void appendToResultWidget( const QString& msg, LogType type = LogParagraph );
