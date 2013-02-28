@@ -11,41 +11,29 @@
  * for more details.
  */
 
-#ifndef SETTINGSDIALOG_H
-#define SETTINGSDIALOG_H
+#ifndef ACCOUNTSETTINGS_H
+#define ACCOUNTSETTINGS_H
 
-#include <QDialog>
-#include <QStyledItemDelegate>
-
-class QStandardItemModel;
-class QListWidgetItem;
+#include <QWidget>
 
 namespace Mirall {
 
 namespace Ui {
-class SettingsDialog;
+class AccountSettings;
 }
 
-class SettingsDialog : public QDialog
+class AccountSettings : public QWidget
 {
     Q_OBJECT
-    
-public:
-    explicit SettingsDialog(QWidget *parent = 0);
-    ~SettingsDialog();
 
-    void addAccount(const QString &title, QWidget *widget);
-    
-private slots:
-    void handleItemClick(int);
-    void checkResetToOldItem(QListWidgetItem*, QListWidgetItem*);
-    void asyncSwitch(int);
+public:
+    explicit AccountSettings(QWidget *parent = 0);
+    ~AccountSettings();
 
 private:
-    Ui::SettingsDialog *_ui;
-    QListWidgetItem *_addItem;
+    Ui::AccountSettings *ui;
 };
 
-}
+} // namespace Mirall
 
-#endif // SETTINGSDIALOG_H
+#endif // ACCOUNTSETTINGS_H

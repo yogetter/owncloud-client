@@ -32,6 +32,7 @@
 #include "mirall/version.h"
 #include "mirall/credentialstore.h"
 #include "mirall/logger.h"
+#include "mirall/settingsdialog.h"
 
 #ifdef WITH_CSYNC
 #include "mirall/csyncfolder.h"
@@ -93,7 +94,8 @@ Application::Application(int &argc, char **argv) :
     _showLogWindow(false),
     _logFlush(false),
     _helpOnly(false),
-    _fileItemDialog(0)
+    _fileItemDialog(0),
+    _settingsDialog(0)
 {
     setApplicationName( _theme->appNameGUI() );
     setWindowIcon( _theme->applicationIcon() );
@@ -353,8 +355,6 @@ void Application::setupActions()
     QObject::connect(_actionConfigure, SIGNAL(triggered(bool)), SLOT(slotConfigure()));
     _actionConfigureProxy = new QAction(tr("Configure proxy..."), this);
     QObject::connect(_actionConfigureProxy, SIGNAL(triggered(bool)), SLOT(slotConfigureProxy()));
-    _actionAbout = new QAction(tr("About..."), this);
-    QObject::connect(_actionAbout, SIGNAL(triggered(bool)), SLOT(slotAbout()));
     _actionQuit = new QAction(tr("Quit"), this);
     QObject::connect(_actionQuit, SIGNAL(triggered(bool)), SLOT(quit()));
 }
@@ -440,11 +440,6 @@ void Application::setupContextMenu()
     _contextMenu->addAction(_actionConfigure);
     _contextMenu->addAction(_actionConfigureProxy);
     _contextMenu->addSeparator();
-
-    if (!Theme::instance()->about().isEmpty()) {
-        _contextMenu->addAction(_actionAbout);
-        _contextMenu->addSeparator();
-    }
 
     _contextMenu->addAction(_actionQuit);
 }
@@ -744,8 +739,9 @@ void Application::slotEnableFolder(const QString& alias, const bool enable)
 
 void Application::slotConfigure()
 {
-    _folderMan->setSyncEnabled(false); // do not start more syncs.
-    _owncloudSetupWizard->startWizard(false);
+    if (!_settingsDialog)
+        _settingsDialog = new SettingsDialog;
+    _settingsDialog->open();
 }
 
 void Application::slotConfigureProxy()
