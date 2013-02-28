@@ -26,12 +26,19 @@ GeneralSettings::GeneralSettings(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    ui->aboutLabel->setText(Theme::instance()->about());
-    ui->aboutLabel->setOpenExternalLinks(true);
+    if (Theme::instance()->about().isEmpty()) {
+        ui->aboutGroupBox->hide();
+    } else {
+        ui->aboutLabel->setText(Theme::instance()->about());
+        ui->aboutLabel->setOpenExternalLinks(true);
+    }
     ui->manualSettings->setVisible(false);
     ui->authWidget->setVisible(false);
     connect(ui->manualProxyRadioButton, SIGNAL(toggled(bool)), ui->manualSettings, SLOT(setShown(bool)));
     connect(ui->authRequiredcheckBox, SIGNAL(toggled(bool)), ui->authWidget, SLOT(setShown(bool)));
+
+
+
 }
 
 GeneralSettings::~GeneralSettings()

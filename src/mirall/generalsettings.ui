@@ -208,7 +208,7 @@
     </spacer>
    </item>
    <item>
-    <widget class="QGroupBox" name="groupBox_2">
+    <widget class="QGroupBox" name="aboutGroupBox">
      <property name="title">
       <string>About</string>
      </property>

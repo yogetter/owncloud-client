@@ -355,8 +355,6 @@ void Application::setupActions()
     QObject::connect(_actionConfigure, SIGNAL(triggered(bool)), SLOT(slotConfigure()));
     _actionConfigureProxy = new QAction(tr("Configure proxy..."), this);
     QObject::connect(_actionConfigureProxy, SIGNAL(triggered(bool)), SLOT(slotConfigureProxy()));
-    _actionAbout = new QAction(tr("About..."), this);
-    QObject::connect(_actionAbout, SIGNAL(triggered(bool)), SLOT(slotAbout()));
     _actionQuit = new QAction(tr("Quit"), this);
     QObject::connect(_actionQuit, SIGNAL(triggered(bool)), SLOT(quit()));
 }
@@ -442,11 +440,6 @@ void Application::setupContextMenu()
     _contextMenu->addAction(_actionConfigure);
     _contextMenu->addAction(_actionConfigureProxy);
     _contextMenu->addSeparator();
-
-    if (!Theme::instance()->about().isEmpty()) {
-        _contextMenu->addAction(_actionAbout);
-        _contextMenu->addSeparator();
-    }
 
     _contextMenu->addAction(_actionQuit);
 }

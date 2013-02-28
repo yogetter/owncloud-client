@@ -107,7 +107,6 @@ private:
     QAction *_actionConfigure;
     QAction *_actionOpenoC;
     QAction *_actionConfigureProxy;
-    QAction *_actionAbout;
 
 #if QT_VERSION >= 0x040700
     QNetworkConfigurationManager *_networkMgr;
