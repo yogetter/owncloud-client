@@ -24,6 +24,8 @@ mirall/sslerrordialog.ui
 mirall/proxydialog.ui
 mirall/fileitemdialog.ui
 mirall/settingsdialog.ui
+mirall/generalsettings.ui
+mirall/accountsettings.ui
 )
 
 set(3rdparty_SRC
@@ -160,6 +162,8 @@ set(mirall_SRCS
     mirall/proxydialog.cpp
     mirall/fileitemdialog.cpp
     mirall/settingsdialog.cpp
+    mirall/generalsettings.cpp
+    mirall/accountsettings.cpp
 )
 
 set(mirall_HEADERS
@@ -174,6 +178,8 @@ set(mirall_HEADERS
     mirall/proxydialog.h
     mirall/fileitemdialog.h
     mirall/settingsdialog.h
+    mirall/generalsettings.h
+    mirall/accountsettings.h
 )
 
 if( UNIX AND NOT APPLE)

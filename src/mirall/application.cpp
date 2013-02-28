@@ -32,6 +32,7 @@
 #include "mirall/version.h"
 #include "mirall/credentialstore.h"
 #include "mirall/logger.h"
+#include "mirall/settingsdialog.h"
 
 #ifdef WITH_CSYNC
 #include "mirall/csyncfolder.h"
@@ -93,7 +94,8 @@ Application::Application(int &argc, char **argv) :
     _showLogWindow(false),
     _logFlush(false),
     _helpOnly(false),
-    _fileItemDialog(0)
+    _fileItemDialog(0),
+    _settingsDialog(0)
 {
     setApplicationName( _theme->appNameGUI() );
     setWindowIcon( _theme->applicationIcon() );
@@ -744,8 +746,9 @@ void Application::slotEnableFolder(const QString& alias, const bool enable)
 
 void Application::slotConfigure()
 {
-    _folderMan->setSyncEnabled(false); // do not start more syncs.
-    _owncloudSetupWizard->startWizard(false);
+    if (!_settingsDialog)
+        _settingsDialog = new SettingsDialog;
+    _settingsDialog->open();
 }
 
 void Application::slotConfigureProxy()

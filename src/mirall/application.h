@@ -44,6 +44,7 @@ class StatusDialog;
 class OwncloudSetupWizard;
 class ownCloudInfo;
 class SslErrorDialog;
+class SettingsDialog;
 class UpdateDetector;
 
 class Application : public SharedTools::QtSingleApplication
@@ -120,7 +121,7 @@ private:
     QMenu *_contextMenu;
     StatusDialog *_statusDialog;
     FileItemDialog *_fileItemDialog;
-
+    SettingsDialog *_settingsDialog;
     FolderMan *_folderMan;
     Theme *_theme;
     QSignalMapper *_folderOpenActionMapper;
