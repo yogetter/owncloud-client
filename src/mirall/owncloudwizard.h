@@ -62,6 +62,7 @@ protected slots:
   void setupCustomization();
   void slotToggleAdvanced(int state);
   void slotChangedSelective(QAbstractButton*);
+  void slotSelectFolder();
 
 signals:
   void connectToOCUrl( const QString& );

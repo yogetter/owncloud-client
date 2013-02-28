@@ -88,7 +88,7 @@ OwncloudSetupPage::OwncloudSetupPage()
     connect( _ui.lePassword, SIGNAL(textChanged(QString)), this, SIGNAL(completeChanged()));
     connect( _ui.leUsername, SIGNAL(textChanged(QString)), this, SIGNAL(completeChanged()));
     connect( _ui.cbAdvanced, SIGNAL(stateChanged (int)), SLOT(slotToggleAdvanced(int)));
-
+    connect( _ui.pbSelectLocalFolder, SIGNAL(clicked()), SLOT(slotSelectFolder()));
     _ui.errorLabel->setVisible(false);
     _ui.advancedBox->setVisible(false);
 
@@ -288,6 +288,15 @@ void OwncloudSetupPage::setLocalFolder( const QString& folder )
 QString OwncloudSetupPage::selectedLocalFolder() const
 {
     return _ui.pbSelectLocalFolder->text();
+}
+
+void OwncloudSetupPage::slotSelectFolder()
+{
+
+    QString dir = QFileDialog::getExistingDirectory(0, tr("Local Sync Folder"), QDir::homePath());
+    if( !dir.isEmpty() ) {
+        _ui.pbSelectLocalFolder->setText(dir);
+    }
 }
 
 // ======================================================================
