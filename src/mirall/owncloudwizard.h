@@ -71,6 +71,7 @@ private:
   Ui_OwncloudSetupPage _ui;
   QString _oCUrl;
   bool    _connected;
+  bool    _checking;
   QProgressIndicator *_progressIndi;
   QButtonGroup       *_selectiveSyncButtons;
 };
@@ -81,9 +82,8 @@ class OwncloudWizard: public QWizard
 public:
 
     enum {
-      Page_oCWelcome,
       Page_oCSetup,
-      Page_Install
+      Page_Result
     };
 
     enum LogType {
@@ -128,19 +128,6 @@ private:
 
 
 /**
- * page for first launch only
- */
-class OwncloudWelcomePage: public QWizardPage
-{
-    Q_OBJECT
-public:
-  OwncloudWelcomePage();
-
-  virtual int nextId() const  { return OwncloudWizard::Page_oCSetup; }
-};
-
-
-/**
  * page to ask for the type of Owncloud to connect to
  */
 
@@ -154,20 +141,18 @@ public:
   OwncloudWizardResultPage();
   ~OwncloudWizardResultPage();
 
-  virtual bool isComplete() const;
-  virtual void initializePage();
-
 public slots:
-  void appendResultText( const QString&, OwncloudWizard::LogType type = OwncloudWizard::LogParagraph );
-  void showOCUrlLabel( const QString&, bool );
+  void setOwncloudUrl( const QString& );
+  void setLocalFolder( const QString& );
 
 protected:
   void setupCustomization();
 
 private:
-  bool _complete;
-  Ui_OwncloudWizardResultPage _ui;
+  QString _url;
+  QString _localFolder;
 
+  Ui_OwncloudWizardResultPage _ui;
 };
 
 } // ns Mirall

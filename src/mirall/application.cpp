@@ -245,7 +245,7 @@ void Application::slotConValidatorResult(ConnectionValidator::Status status)
         break;
     case ConnectionValidator::NotConfigured:
         qDebug() << "Connection Validator Not Configured.";
-        _owncloudSetupWizard->startWizard(true); // Setup with intro
+        _owncloudSetupWizard->startWizard(); // Setup with intro
         break;
     case ConnectionValidator::ServerVersionMismatch:
         qDebug() << "Connection Validator ServerVersionMismatch.";
@@ -629,7 +629,7 @@ void Application::slotOpenStatus()
     if( !cfgFile.exists() ) {
       qDebug() << "No configured folders yet, start the Owncloud integration dialog.";
       _folderMan->setSyncEnabled(false);
-      _owncloudSetupWizard->startWizard(true); // with intro
+      _owncloudSetupWizard->startWizard();
     } else {
       qDebug() << "#============# Status dialog starting #=============#";
       raiseWidget = _statusDialog;
