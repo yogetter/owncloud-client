@@ -152,6 +152,7 @@ QString Theme::defaultClientFolder() const
 void Theme::setSystrayUseMonoIcons(bool mono)
 {
     _mono = mono;
+    emit systrayUseMonoIconsChanged(mono);
 }
 
 bool Theme::systrayUseMonoIcons() const

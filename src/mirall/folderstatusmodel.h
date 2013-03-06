@@ -12,8 +12,8 @@
  * for more details.
  */
 
-#ifndef STATUSDIALOG_H
-#define STATUSDIALOG_H
+#ifndef FOLDERSTATUSMODEL_H
+#define FOLDERSTATUSMODEL_H
 
 #include <QDialog>
 #include <QStyledItemDelegate>
@@ -36,7 +36,6 @@ public:
     QVariant data(const QModelIndex &index, int role) const;
 
 };
-
 
 class FolderViewDelegate : public QStyledItemDelegate
 {
@@ -61,54 +60,6 @@ class FolderViewDelegate : public QStyledItemDelegate
                       const QModelIndex& index );
 };
 
-class StatusDialog : public QDialog, protected Ui::statusDialog
-{
-    Q_OBJECT
-public:
-    explicit StatusDialog( Theme *theme, QWidget *parent = 0);
-    ~StatusDialog();
-
-    void setFolderList( Folder::Map );
-    void buttonsSetEnabled();
-
-signals:
-    void removeFolderAlias( const QString& );
-    void fetchFolderAlias( const QString& );
-    void pushFolderAlias( const QString& );
-    void enableFolderAlias( const QString&, const bool );
-    void infoFolderAlias( const QString& );
-    void openFolderAlias( const QString& );
-
-    /* start the add a folder wizard. */
-    void addASync();
-
-public slots:
-    void slotRemoveFolder();
-    void slotRemoveSelectedFolder();
-    void slotFetchFolder();
-    void slotPushFolder();
-    void slotFolderActivated( const QModelIndex& );
-    void slotOpenOC();
-    void slotEnableFolder();
-    void slotInfoFolder();
-    void slotAddSync();
-    void slotAddFolder( Folder* );
-    void slotUpdateFolderState( Folder* );
-    void slotCheckConnection();
-
-    void slotOCInfoFail(QNetworkReply*);
-    void slotOCInfo( const QString&, const QString&, const QString&, const QString& );
-    void slotDoubleClicked( const QModelIndex& );
-
-protected:
-    void showEvent ( QShowEvent* );
-private:
-    void folderToModelItem( QStandardItem*, Folder* );
-
-    QStandardItemModel *_model;
-    QUrl   _OCUrl;
-    Theme *_theme;
-};
 }
 
-#endif // STATUSDIALOG_H
+#endif // FOLDERSTATUSMODEL_H

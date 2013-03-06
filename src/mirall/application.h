@@ -40,7 +40,6 @@ namespace Mirall {
 class Theme;
 class FolderWatcher;
 class FolderWizard;
-class StatusDialog;
 class OwncloudSetupWizard;
 class ownCloudInfo;
 class SslErrorDialog;
@@ -60,13 +59,10 @@ public:
 signals:
 
 protected slots:
-    void slotAddFolder();
-    void slotOpenStatus();
     void slotRemoveFolder( const QString& );
     void slotEnableFolder( const QString&, const bool );
     void slotInfoFolder( const QString& );
     void slotConfigure();
-    void slotConfigureProxy();
     void slotParseOptions( const QString& );
     void slotShowTrayMessage(const QString&, const QString&);
 
@@ -93,6 +89,7 @@ protected slots:
     void slotAbout();
     void slotSSLFailed( QNetworkReply *reply, QList<QSslError> errors );
     void slotStartUpdateDetector();
+    void slotUseMonoIconsChanged(bool);
 
     void slotConValidatorResult(ConnectionValidator::Status);
 private:
@@ -102,30 +99,24 @@ private:
     // configuration file -> folder
     QSystemTrayIcon *_tray;
     QAction *_actionQuit;
-    QAction *_actionAddFolder;
-    QAction *_actionOpenStatus;
     QAction *_actionConfigure;
     QAction *_actionOpenoC;
-    QAction *_actionConfigureProxy;
 
 #if QT_VERSION >= 0x040700
     QNetworkConfigurationManager *_networkMgr;
 #endif
 
-    FolderWizard  *_folderWizard;
     OwncloudSetupWizard *_owncloudSetupWizard;
     SslErrorDialog *_sslErrorDialog;
 
     // tray's menu
     QMenu *_contextMenu;
-    StatusDialog *_statusDialog;
     FileItemDialog *_fileItemDialog;
     SettingsDialog *_settingsDialog;
     FolderMan *_folderMan;
     Theme *_theme;
     QSignalMapper *_folderOpenActionMapper;
     UpdateDetector *_updateDetector;
-    QMap<QString, QString> _overallStatusStrings;
     LogBrowser *_logBrowser;
     ConnectionValidator* _conValidator;
 

@@ -43,19 +43,18 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
     connect(_ui->labelWidget, SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)),
             SLOT(checkResetToOldItem(QListWidgetItem*,QListWidgetItem*)));
 
-    QListWidgetItem *general = new QListWidgetItem(createDummy(), tr("General"), _ui->labelWidget);
+    QListWidgetItem *general = new QListWidgetItem(tr("General"), _ui->labelWidget);
     general->setSizeHint(QSize(0, 32));
     _ui->labelWidget->addItem(general);
     GeneralSettings *generalSettings = new GeneralSettings;
     connect(generalSettings, SIGNAL(resizeToSizeHint()), SLOT(resizeToSizeHint()));
     _ui->stack->addWidget(generalSettings);
 
-    _addItem = new QListWidgetItem(createDummy(), tr("Add Account"), _ui->labelWidget);
+    _addItem = new QListWidgetItem(tr("Add Account"), _ui->labelWidget);
     _addItem->setSizeHint(QSize(0, 32));
     _ui->labelWidget->addItem(_addItem);
 
-    addAccount(tr("Account #1"), new AccountSettings);
-    addAccount(tr("Account #2"), new AccountSettings);
+    addAccount(tr("Account"), new AccountSettings);
 
     QPushButton *closeButton = _ui->buttonBox->button(QDialogButtonBox::Close);
     connect(closeButton, SIGNAL(pressed()), SLOT(accept()));
@@ -70,7 +69,7 @@ SettingsDialog::~SettingsDialog()
 
 void SettingsDialog::addAccount(const QString &title, QWidget *widget)
 {
-    QListWidgetItem *item = new QListWidgetItem(Theme::instance()->syncStateIcon(SyncResult::Success), title);
+    QListWidgetItem *item = new QListWidgetItem(title);
     item->setSizeHint(QSize(0, 32));
     qDebug() << Q_FUNC_INFO << _ui->stack->count();
     _ui->labelWidget->insertItem(_ui->labelWidget->count()-1, item);

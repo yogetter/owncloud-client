@@ -30,7 +30,13 @@ public:
     explicit GeneralSettings(QWidget *parent = 0);
     ~GeneralSettings();
 
+private slots:
+    void saveProxySettings();
+    void saveMiscSettings();
+
 private:
+    void loadProxySettings();
+    void loadMiscSettings();
     Ui::GeneralSettings *ui;
 };
 

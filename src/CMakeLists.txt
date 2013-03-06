@@ -16,7 +16,6 @@ mirall/folderwizardsourcepage.ui
 mirall/folderwizardtargetpage.ui
 mirall/folderwizardnetworkpage.ui
 mirall/folderwizardowncloudpage.ui
-mirall/statusdialog.ui
 mirall/owncloudwizardselecttypepage.ui
 mirall/owncloudsetuppage_ng.ui
 mirall/owncloudwizardresultpage.ui
@@ -93,6 +92,7 @@ set(libsync_HEADERS
     mirall/owncloudinfo.h
     mirall/credentialstore.h
     mirall/logger.h
+    mirall/theme.h
     mirall/connectionvalidator.h
 )
 
@@ -155,7 +155,7 @@ endif()
 set(mirall_SRCS
     mirall/application.cpp
     mirall/folderwizard.cpp
-    mirall/statusdialog.cpp
+    mirall/folderstatusmodel.cpp
     mirall/owncloudwizard.cpp
     mirall/owncloudsetupwizard.cpp
     mirall/updatedetector.cpp
@@ -174,7 +174,7 @@ set(mirall_HEADERS
     mirall/folderwizard.h
     mirall/owncloudsetupwizard.h
     mirall/owncloudwizard.h
-    mirall/statusdialog.h
+    mirall/folderstatusmodel.h
     mirall/updatedetector.h
     mirall/sslerrordialog.h
     mirall/logbrowser.h

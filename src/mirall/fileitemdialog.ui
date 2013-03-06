@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>_fileItemDialog</class>
- <widget class="QWidget" name="_fileItemDialog">
+ <class>Mirall::_fileItemDialog</class>
+ <widget class="QWidget" name="Mirall::_fileItemDialog">
   <property name="geometry">
    <rect>
     <x>0</x>

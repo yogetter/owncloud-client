@@ -21,7 +21,7 @@
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_4">
       <item>
-       <widget class="QCheckBox" name="ckUseMonochrome">
+       <widget class="QCheckBox" name="monoIconsCheckBox">
         <property name="text">
          <string>Use monochrome icons</string>
         </property>
@@ -84,7 +84,7 @@
               <string/>
              </property>
              <property name="placeholderText">
-              <string>Host</string>
+              <string>Host http://...</string>
              </property>
             </widget>
            </item>
@@ -142,6 +142,25 @@
              <number>0</number>
             </property>
             <item>
+             <widget class="QLineEdit" name="userLineEdit">
+              <property name="enabled">
+               <bool>true</bool>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>300</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+              <property name="placeholderText">
+               <string>Username</string>
+              </property>
+             </widget>
+            </item>
+            <item>
              <widget class="QLineEdit" name="passwordLineEdit">
               <property name="enabled">
                <bool>true</bool>
@@ -157,25 +176,6 @@
               </property>
               <property name="echoMode">
                <enum>QLineEdit::Password</enum>
-              </property>
-              <property name="placeholderText">
-               <string>User</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLineEdit" name="userLineEdit">
-              <property name="enabled">
-               <bool>true</bool>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>300</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="text">
-               <string/>
               </property>
               <property name="placeholderText">
                <string>Password</string>

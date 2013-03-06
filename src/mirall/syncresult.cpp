@@ -1,4 +1,4 @@
-/*
+    /*
  * Copyright (C) by Duncan Mac-Vicar P. <duncan@kde.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,13 +19,11 @@ namespace Mirall
 
 SyncResult::SyncResult()
 : _status( Undefined )
-  , _localRunOnly(false)
 {
 }
 
 SyncResult::SyncResult(SyncResult::Status status )
     : _status(status)
-    , _localRunOnly(false)
 {
 }
 
@@ -113,16 +111,6 @@ QString SyncResult::errorString() const
 void SyncResult::clearErrors()
 {
     _errors.clear();
-}
-
-bool SyncResult::localRunOnly() const
-{
-    return _localRunOnly;
-}
-
-void SyncResult::setLocalRunOnly( bool lor )
-{
-    _localRunOnly = lor;
 }
 
 SyncResult::~SyncResult()

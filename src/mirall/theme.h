@@ -16,19 +16,19 @@
 #define _THEME_H
 
 #include "mirall/syncresult.h"
-
+#include <QObject>
 
 class QIcon;
 class QString;
-class QObject;
 class QPixmap;
 
 namespace Mirall {
 
 class SyncResult;
 
-class Theme
+class Theme : public QObject
 {
+    Q_OBJECT
 public:
     enum CustomMediaType {
         oCSetupTop,      // ownCloud connect page
@@ -141,6 +141,9 @@ public:
      * Retrieve wether to use mono icons for systray
      */
     bool systrayUseMonoIcons() const;
+
+signals:
+    void systrayUseMonoIconsChanged(bool);
 
 protected:
     QIcon themeIcon(const QString& name, bool sysTray = false) const;

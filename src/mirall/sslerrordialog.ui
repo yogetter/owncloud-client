@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>sslErrorDialog</class>
- <widget class="QWidget" name="sslErrorDialog">
+ <class>Mirall::sslErrorDialog</class>
+ <widget class="QWidget" name="Mirall::sslErrorDialog">
   <property name="geometry">
    <rect>
     <x>0</x>

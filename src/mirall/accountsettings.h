@@ -15,6 +15,15 @@
 #define ACCOUNTSETTINGS_H
 
 #include <QWidget>
+#include <QUrl>
+
+#include "mirall/folder.h"
+
+class QStandardItemModel;
+class QModelIndex;
+class QStandardItem;
+class QNetworkReply;
+class QListWidgetItem;
 
 namespace Mirall {
 
@@ -30,8 +39,41 @@ public:
     explicit AccountSettings(QWidget *parent = 0);
     ~AccountSettings();
 
+    void setFolderList( Folder::Map );
+    void buttonsSetEnabled();
+    void setListWidgetItem(QListWidgetItem* item);
+
+signals:
+    void removeFolderAlias( const QString& );
+    void fetchFolderAlias( const QString& );
+    void pushFolderAlias( const QString& );
+    void enableFolderAlias( const QString&, const bool );
+    void infoFolderAlias( const QString& );
+    void openFolderAlias( const QString& );
+
+public slots:
+    void slotAddFolder();
+    void slotAddFolder( Folder* );
+    void slotFolderWizardAccepted();
+    void slotFolderWizardRejected();
+    void slotRemoveFolder();
+    void slotRemoveSelectedFolder();
+    void slotFolderActivated( const QModelIndex& );
+    void slotOpenOC();
+    void slotEnableFolder();
+    void slotInfoFolder();
+    void slotUpdateFolderState( Folder* );
+    void slotCheckConnection();
+    void slotOCInfo( const QString&, const QString&, const QString&, const QString& );
+    void slotOCInfoFail( QNetworkReply* );
+    void slotDoubleClicked( const QModelIndex& );
+    void slotFolderOpenAction( const QString& );
 private:
+    void folderToModelItem( QStandardItem *, Folder * );
     Ui::AccountSettings *ui;
+    QStandardItemModel *_model;
+    QListWidgetItem *_item;
+    QUrl   _OCUrl;
 };
 
 } // namespace Mirall

@@ -23,9 +23,9 @@
 #include "ui_fileitemdialog.h"
 
 namespace Mirall {
+
 class Theme;
 class SyncResult;
-
 
 class FileItemDialog : public QDialog, public Ui::_fileItemDialog
 {

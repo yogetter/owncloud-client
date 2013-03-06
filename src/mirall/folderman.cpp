@@ -33,8 +33,18 @@
 
 namespace Mirall {
 
-FolderMan::FolderMan(QObject *parent) :
-    QObject(parent),
+
+FolderMan* FolderMan::_instance = 0;
+
+FolderMan* FolderMan::instance() {
+    if (!_instance) {
+        _instance = new FolderMan;
+    }
+    return _instance;
+}
+
+FolderMan::FolderMan()
+    : QObject(),
     _syncEnabled( true )
 {
     // if QDir::mkpath would not be so stupid, I would not need to have this

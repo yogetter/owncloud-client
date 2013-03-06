@@ -33,7 +33,7 @@ class FolderMan : public QObject
 {
     Q_OBJECT
 public:
-    explicit FolderMan(QObject *parent = 0);
+    static FolderMan* instance();
     ~FolderMan();
 
     int setupFolders();
@@ -108,6 +108,7 @@ private slots:
     void slotScheduleFolderSync();
 
 private:
+    FolderMan();
     // finds all folder configuration files
     // and create the folders
     int setupKnownFolders();
@@ -128,6 +129,8 @@ private:
     QString        _currentSyncFolder;
     QStringList    _scheduleQueue;
     bool           _syncEnabled;
+
+    static FolderMan *_instance;
 };
 
 }

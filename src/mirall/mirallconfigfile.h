@@ -100,6 +100,10 @@ public:
     QString proxyUser() const;
     QString proxyPassword() const;
 
+    // max count of lines in the log window
+    bool  monoIcons() const;
+    void setMonoIcons(bool);
+
 protected:
     // these classes can only be access from CredentialStore as a friend class.
     QString ownCloudPasswd( const QString& connection = QString() ) const;
