@@ -12,7 +12,7 @@
  * for more details.
  */
 
-#include "mirall/folderman.h"
+#include "mirall/folderscheduler.h"
 #include "mirall/mirallconfigfile.h"
 #include "mirall/unisonfolder.h"
 #include "mirall/csyncfolder.h"
@@ -20,30 +20,23 @@
 #include "mirall/syncresult.h"
 #include "mirall/inotify.h"
 #include "mirall/theme.h"
-
-#ifdef Q_OS_MAC
-#include <CoreServices/CoreServices.h>
-#endif
-#ifdef Q_OS_WIN
-#include <shlobj.h>
-#endif
+#include "mirall/utility.h"
 
 #include <QDesktopServices>
 #include <QtCore>
 
 namespace Mirall {
 
+FolderScheduler* FolderScheduler::_instance = 0;
 
-FolderMan* FolderMan::_instance = 0;
-
-FolderMan* FolderMan::instance() {
+FolderScheduler* FolderScheduler::instance() {
     if (!_instance) {
-        _instance = new FolderMan;
+        _instance = new FolderScheduler;
     }
     return _instance;
 }
 
-FolderMan::FolderMan()
+FolderScheduler::FolderScheduler()
     : QObject(),
     _syncEnabled( true )
 {
@@ -58,40 +51,19 @@ FolderMan::FolderMan()
             this, SIGNAL(folderSyncStateChange(const QString &)));
 }
 
-FolderMan::~FolderMan()
+FolderScheduler::~FolderScheduler()
 {
     foreach (Folder *folder, _folderMap) {
         delete folder;
     }
 }
 
-Mirall::Folder::Map FolderMan::map()
+Mirall::Folder::Map FolderScheduler::map()
 {
     return _folderMap;
 }
 
-
-int FolderMan::setupFolders()
-{
-    // setup a handler to look for configuration changes
-#ifdef CHECK_FOR_SETUP_CHANGES
-    _configFolderWatcher = new FolderWatcher( _folderConfigPath );
-    _configFolderWatcher->setEventInterval(20000);
-    connect(_configFolderWatcher, SIGNAL(folderChanged(const QStringList &)),
-            this, SLOT( slotReparseConfiguration()) );
-#endif
-    int cnt = setupKnownFolders();
-
-    return cnt;
-}
-
-void FolderMan::slotReparseConfiguration()
-{
-    setupKnownFolders();
-}
-
-
-int FolderMan::setupKnownFolders()
+int FolderScheduler::setupFolders()
 {
   qDebug() << "* Setup folders from " << _folderConfigPath;
 
@@ -119,7 +91,7 @@ int FolderMan::setupKnownFolders()
   return _folderMap.size();
 }
 
-void FolderMan::wipeAllJournals()
+void FolderScheduler::wipeAllJournals()
 {
     terminateCurrentSync();
 
@@ -128,7 +100,7 @@ void FolderMan::wipeAllJournals()
     }
 }
 
-void FolderMan::terminateCurrentSync()
+void FolderScheduler::terminateCurrentSync()
 {
     if( !_currentSyncFolder.isEmpty() ) {
         qDebug() << "Terminating syncing on folder " << _currentSyncFolder;
@@ -149,7 +121,7 @@ void FolderMan::terminateCurrentSync()
 #define PAR_O_TAG   QLatin1String("__PAR_OPEN__")
 #define PAR_C_TAG   QLatin1String("__PAR_CLOSE__")
 
-QString FolderMan::escapeAlias( const QString& alias ) const
+QString FolderScheduler::escapeAlias( const QString& alias ) const
 {
     QString a(alias);
 
@@ -168,7 +140,7 @@ QString FolderMan::escapeAlias( const QString& alias ) const
     return a;
 }
 
-QString FolderMan::unescapeAlias( const QString& alias ) const
+QString FolderScheduler::unescapeAlias( const QString& alias ) const
 {
     QString a(alias);
 
@@ -188,41 +160,9 @@ QString FolderMan::unescapeAlias( const QString& alias ) const
     return a;
 }
 
-void FolderMan::setupFavLink(const QString &folder)
-{
-#ifdef Q_OS_WIN
-    // Windows Explorer: Place under "Favorites" (Links)
-    wchar_t path[MAX_PATH];
-    SHGetSpecialFolderPath(0, path, CSIDL_PROFILE, FALSE);
-    QString profile =  QDir::fromNativeSeparators(QString::fromWCharArray(path));
-    QDir folderDir(QDir::fromNativeSeparators(folder));
-    QString linkName = profile+QLatin1String("/Links/") + folderDir.dirName() + QLatin1String(".lnk");
-    if (!QFile::link(folder, linkName))
-        qDebug() << Q_FUNC_INFO << "linking" << folder << "to" << linkName << "failed!";
-#elif defined (Q_OS_MAC)
-    // Finder: Place under "Places"
-    QString folderUrl = QUrl::fromLocalFile(folder).toString();
-    CFStringRef folderCFStr = CFStringCreateWithCharacters(0, reinterpret_cast<const UniChar *>(folderUrl.unicode()),
-                                                   folder.length());
-    CFURLRef urlRef = CFURLCreateWithString(NULL, folderCFStr, 0);
-    LSSharedFileListRef placesItems = LSSharedFileListCreate(0, kLSSharedFileListFavoriteItems, 0);
-    if (placesItems) {
-        //Insert an item to the list.
-        LSSharedFileListItemRef item = LSSharedFileListInsertItemURL(placesItems,
-                                                                     kLSSharedFileListItemBeforeFirst, 0, 0,
-                                                                     urlRef, 0, 0);
-        if (item)
-            CFRelease(item);
-    }
-    CFRelease(placesItems);
-    CFRelease(folderCFStr);
-    CFRelease(urlRef);
-#endif
-}
-
 // filename is the name of the file only, it does not include
 // the configuration directory path
-Folder* FolderMan::setupFolderFromConfigFile(const QString &file) {
+Folder* FolderScheduler::setupFolderFromConfigFile(const QString &file) {
     Folder *folder = 0;
 
     qDebug() << "  ` -> setting up:" << file;
@@ -315,7 +255,7 @@ Folder* FolderMan::setupFolderFromConfigFile(const QString &file) {
     return folder;
 }
 
-void FolderMan::slotEnableFolder( const QString& alias, bool enable )
+void FolderScheduler::slotEnableFolder( const QString& alias, bool enable )
 {
     if( ! _folderMap.contains( alias ) ) {
       qDebug() << "!! Can not enable alias " << alias << ", can not be found in folderMap.";
@@ -330,7 +270,7 @@ void FolderMan::slotEnableFolder( const QString& alias, bool enable )
 
 // this really terminates, ie. no questions, no prisoners.
 // csync still remains in a stable state, regardless of that.
-void FolderMan::terminateSyncProcess( const QString& alias )
+void FolderScheduler::terminateSyncProcess( const QString& alias )
 {
     Folder *f = _folderMap[alias];
     if( f ) {
@@ -341,7 +281,7 @@ void FolderMan::terminateSyncProcess( const QString& alias )
     }
 }
 
-Folder *FolderMan::folder( const QString& alias )
+Folder *FolderScheduler::folder( const QString& alias )
 {
     if( !alias.isEmpty() ) {
         if( _folderMap.contains( alias )) {
@@ -351,7 +291,7 @@ Folder *FolderMan::folder( const QString& alias )
     return 0;
 }
 
-SyncResult FolderMan::syncResult( const QString& alias )
+SyncResult FolderScheduler::syncResult( const QString& alias )
 {
     SyncResult res;
     Folder *f = folder( alias );
@@ -362,7 +302,7 @@ SyncResult FolderMan::syncResult( const QString& alias )
     return res;
 }
 
-void FolderMan::slotScheduleAllFolders()
+void FolderScheduler::slotScheduleAllFolders()
 {
     foreach( Folder *f, _folderMap.values() ) {
         slotScheduleSync( f->alias() );
@@ -373,7 +313,7 @@ void FolderMan::slotScheduleAllFolders()
   * if a folder wants to be synced, it calls this slot and is added
   * to the queue. The slot to actually start a sync is called afterwards.
   */
-void FolderMan::slotScheduleSync( const QString& alias )
+void FolderScheduler::slotScheduleSync( const QString& alias )
 {
     if( alias.isEmpty() ) return;
 
@@ -393,7 +333,7 @@ void FolderMan::slotScheduleSync( const QString& alias )
 
 }
 
-void FolderMan::setSyncEnabled( bool enabled )
+void FolderScheduler::setSyncEnabled( bool enabled )
 {
     _syncEnabled = enabled;
 }
@@ -403,7 +343,7 @@ void FolderMan::setSyncEnabled( bool enabled )
   * It is either called from the slot where folders enqueue themselves for
   * syncing or after a folder sync was finished.
   */
-void FolderMan::slotScheduleFolderSync()
+void FolderScheduler::slotScheduleFolderSync()
 {
     if( !_currentSyncFolder.isEmpty() ) {
         qDebug() << "Currently folder " << _currentSyncFolder << " is running, wait for finish!";
@@ -426,7 +366,7 @@ void FolderMan::slotScheduleFolderSync()
     }
 }
 
-void FolderMan::slotFolderSyncStarted( )
+void FolderScheduler::slotFolderSyncStarted( )
 {
     qDebug() << ">===================================== sync started for " << _currentSyncFolder;
 }
@@ -435,7 +375,7 @@ void FolderMan::slotFolderSyncStarted( )
   * a folder indicates that its syncing is finished.
   * Start the next sync after the system had some milliseconds to breath.
   */
-void FolderMan::slotFolderSyncFinished( const SyncResult& )
+void FolderScheduler::slotFolderSyncFinished( const SyncResult& )
 {
     qDebug() << "<===================================== sync finished for " << _currentSyncFolder;
 
@@ -452,7 +392,7 @@ void FolderMan::slotFolderSyncFinished( const SyncResult& )
   * QString targetPath on remote
   * bool    onlyThisLAN, currently unused.
   */
-void FolderMan::addFolderDefinition( const QString& backend, const QString& alias,
+void FolderScheduler::addFolderDefinition( const QString& backend, const QString& alias,
                                      const QString& sourceFolder, const QString& targetPath,
                                      bool onlyThisLAN )
 {
@@ -467,10 +407,10 @@ void FolderMan::addFolderDefinition( const QString& backend, const QString& alia
     settings.setValue(QString::fromLatin1("%1/onlyThisLAN").arg(escapedAlias), onlyThisLAN );
     settings.sync();
 
-    setupFavLink(sourceFolder);
+    Utility::setupFavLink(sourceFolder);
 }
 
-void FolderMan::removeAllFolderDefinitions()
+void FolderScheduler::removeAllFolderDefinitions()
 {
     foreach( Folder *f, _folderMap.values() ) {
         slotRemoveFolder( f->alias() );
@@ -480,7 +420,7 @@ void FolderMan::removeAllFolderDefinitions()
 
 }
 
-void FolderMan::slotRemoveFolder( const QString& alias )
+void FolderScheduler::slotRemoveFolder( const QString& alias )
 {
     if( alias.isEmpty() ) return;
 
@@ -492,7 +432,7 @@ void FolderMan::slotRemoveFolder( const QString& alias )
 }
 
 // remove a folder from the map. Should be sure n
-void FolderMan::removeFolder( const QString& alias )
+void FolderScheduler::removeFolder( const QString& alias )
 {
     Folder *f = 0;
 

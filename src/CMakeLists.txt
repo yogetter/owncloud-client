@@ -61,7 +61,7 @@ set(3rdparty_INC
 qt4_wrap_ui(mirall_UI_SRCS ${mirall_UI})
 
 set(libsync_SRCS
-    mirall/folderman.cpp
+    mirall/folderscheduler.cpp
     mirall/folder.cpp
     mirall/folderwatcher.cpp
     mirall/syncresult.cpp
@@ -82,7 +82,7 @@ set(libsync_SRCS
     mirall/connectionvalidator.cpp
 )
 set(libsync_HEADERS 
-    mirall/folderman.h
+    mirall/folderscheduler.h
     mirall/folder.h
     mirall/folderwatcher.h
     mirall/unisonfolder.h

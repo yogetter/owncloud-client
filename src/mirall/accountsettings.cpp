@@ -19,7 +19,7 @@
 #include "mirall/folderstatusmodel.h"
 #include "mirall/owncloudinfo.h"
 #include "mirall/credentialstore.h"
-#include "mirall/folderman.h"
+#include "mirall/folderscheduler.h"
 #include "mirall/folderwizard.h"
 
 #include <QDebug>
@@ -59,7 +59,7 @@ AccountSettings::AccountSettings(QWidget *parent) :
 
     ui->connectLabel->setWordWrap( true );
 
-    setFolderList(FolderMan::instance()->map());
+    setFolderList(FolderScheduler::instance()->map());
 
     slotCheckConnection();
 }
@@ -241,7 +241,7 @@ void AccountSettings::setFolderList( Folder::Map folders )
 // move from Application
 void AccountSettings::slotFolderOpenAction( const QString& alias )
 {
-    Folder *f = FolderMan::instance()->folder(alias);
+    Folder *f = FolderScheduler::instance()->folder(alias);
     qDebug() << "opening local url " << f->path();
     if( f ) {
         QUrl url(f->path(), QUrl::TolerantMode);
@@ -263,12 +263,12 @@ void AccountSettings::slotFolderOpenAction( const QString& alias )
 
 void AccountSettings::slotAddFolder()
 {
-    FolderMan *folderMan = FolderMan::instance();
+    FolderScheduler *folderScheduler = FolderScheduler::instance();
 
-    folderMan->setSyncEnabled(false); // do not start more syncs.
+    folderScheduler->setSyncEnabled(false); // do not start more syncs.
 
     FolderWizard *folderWizard = new FolderWizard(this);
-    Folder::Map folderMap = folderMan->map();
+    Folder::Map folderMap = folderScheduler->map();
     folderWizard->setFolderMap( &folderMap );
 
     connect(folderWizard, SIGNAL(accepted()), SLOT(slotFolderWizardAccepted()));
@@ -305,12 +305,12 @@ void AccountSettings::slotFolderWizardAccepted()
         goodData = false;
     }
 
-    FolderMan* folderMan = FolderMan::instance();
-    folderMan->setSyncEnabled(true); // do start sync again.
+    FolderScheduler* folderScheduler = FolderScheduler::instance();
+    folderScheduler->setSyncEnabled(true); // do start sync again.
 
     if( goodData ) {
-        folderMan->addFolderDefinition( backend, alias, sourceFolder, targetPath, false );
-        Folder *f = folderMan->setupFolderFromConfigFile( alias );
+        folderScheduler->addFolderDefinition( backend, alias, sourceFolder, targetPath, false );
+        Folder *f = folderScheduler->setupFolderFromConfigFile( alias );
         if( f ) {
             slotAddFolder( f );
         }
@@ -321,9 +321,9 @@ void AccountSettings::slotFolderWizardRejected()
 {
     qDebug() << "* Folder wizard cancelled";
     FolderWizard *folderWizard = qobject_cast<FolderWizard*>(sender());
-    FolderMan* folderMan = FolderMan::instance();
-    folderMan->setSyncEnabled(true);
-    folderMan->slotScheduleAllFolders();
+    FolderScheduler* folderScheduler = FolderScheduler::instance();
+    folderScheduler->setSyncEnabled(true);
+    folderScheduler->slotScheduleAllFolders();
 }
 
 void AccountSettings::slotEnableFolder()

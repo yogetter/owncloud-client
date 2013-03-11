@@ -25,7 +25,7 @@
 #include "mirall/syncresult.h"
 #include "mirall/folder.h"
 #include "mirall/logbrowser.h"
-#include "mirall/folderman.h"
+#include "mirall/folderscheduler.h"
 #include "mirall/fileitemdialog.h"
 #include "mirall/connectionvalidator.h"
 
@@ -113,7 +113,7 @@ private:
     QMenu *_contextMenu;
     FileItemDialog *_fileItemDialog;
     SettingsDialog *_settingsDialog;
-    FolderMan *_folderMan;
+    FolderScheduler *_folderScheduler;
     Theme *_theme;
     QSignalMapper *_folderOpenActionMapper;
     UpdateDetector *_updateDetector;

@@ -29,13 +29,13 @@ namespace Mirall {
 class SiteCopyFolder;
 class SyncResult;
 class ownCloudInfo;
-class FolderMan;
+class FolderScheduler;
 
 class OwncloudSetupWizard : public QObject
 {
     Q_OBJECT
 public:
-    explicit OwncloudSetupWizard( FolderMan *folderMan = 0, Theme *theme = 0, QObject *parent = 0 );
+    explicit OwncloudSetupWizard( FolderScheduler *folderScheduler = 0, Theme *theme = 0, QObject *parent = 0 );
 
     ~OwncloudSetupWizard();
 
@@ -87,7 +87,7 @@ private:
     OwncloudWizard *_ocWizard;
     QPointer<QNetworkReply>  _mkdirRequestReply;
     QPointer<QNetworkReply>  _checkInstallationRequest;
-    FolderMan      *_folderMan;
+    FolderScheduler      *_folderScheduler;
     ConnectionValidator *_conValidator;
     QString         _configHandle;
     QString         _localFolder;

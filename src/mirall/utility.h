@@ -17,13 +17,16 @@
 #include <QString>
 #include <QByteArray>
 
-namespace Mirall {
+class QNetworkAccessManager;
 
+namespace Mirall {
 
 class Utility
 {
 public:
     static QString formatFingerprint( const QByteArray& );
+    static void setupFavLink( const QString &folder );
+    static QNetworkAccessManager* qnam();
 };
 
 }

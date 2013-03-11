@@ -15,7 +15,7 @@
 #include "mirall/owncloudsetupwizard.h"
 #include "mirall/mirallconfigfile.h"
 #include "mirall/owncloudinfo.h"
-#include "mirall/folderman.h"
+#include "mirall/folderscheduler.h"
 #include "mirall/credentialstore.h"
 #include "mirall/connectionvalidator.h"
 
@@ -28,11 +28,11 @@ namespace Mirall {
 
 class Theme;
 
-OwncloudSetupWizard::OwncloudSetupWizard( FolderMan *folderMan, Theme *theme, QObject *parent ) :
+OwncloudSetupWizard::OwncloudSetupWizard( FolderScheduler *folderScheduler, Theme *theme, QObject *parent ) :
     QObject( parent ),
     _mkdirRequestReply(0),
     _checkInstallationRequest(0),
-    _folderMan(folderMan)
+    _folderScheduler(folderScheduler)
 {
     _ocWizard = new OwncloudWizard();
 
@@ -96,7 +96,7 @@ void OwncloudSetupWizard::slotAssistantFinished( int result )
         MirallConfigFile prevCfg;
         if( prevCfg.ownCloudUrl() != cfg.ownCloudUrl() ) {
             qDebug() << "ownCloud URL has changed, journals needs to be wiped.";
-            _folderMan->wipeAllJournals();
+            _folderScheduler->wipeAllJournals();
         }
 
         // save the user credentials and afterwards clear the cred store.
@@ -104,12 +104,12 @@ void OwncloudSetupWizard::slotAssistantFinished( int result )
 
         // Now write the resulting folder definition if folder names are set.
         if( !( _localFolder.isEmpty() || _remoteFolder.isEmpty() ) ) { // both variables are set.
-            if( _folderMan ) {
-                _folderMan->addFolderDefinition( QLatin1String("owncloud"), Theme::instance()->appName(),
+            if( _folderScheduler ) {
+                _folderScheduler->addFolderDefinition( QLatin1String("owncloud"), Theme::instance()->appName(),
 				_localFolder, _remoteFolder, false );
                 _ocWizard->appendToResultWidget(tr("<font color=\"green\"><b>Local sync folder %1 successfully created!</b></font>").arg(_localFolder));
             } else {
-                qDebug() << "WRN: Folderman is zero in Setup Wizzard.";
+                qDebug() << "WRN: folderScheduler is zero in Setup Wizzard.";
             }
         }
     } else {
@@ -267,8 +267,8 @@ OwncloudWizard *OwncloudSetupWizard::wizard()
 
 void OwncloudSetupWizard::setupSyncFolder()
 {
-    if( ! _folderMan ) {
-        qDebug() << "Folderman is not known!";
+    if( ! _folderScheduler ) {
+        qDebug() << "folderScheduler is not known!";
         return;
     }
 

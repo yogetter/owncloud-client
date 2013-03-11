@@ -117,10 +117,10 @@ Application::Application(int &argc, char **argv) :
     connect( Logger::instance(), SIGNAL(guiLog(QString,QString)),
              this, SLOT(slotShowTrayMessage(QString,QString)));
     // create folder manager for sync folder management
-    _folderMan = FolderMan::instance();
-    connect( _folderMan, SIGNAL(folderSyncStateChange(QString)),
+    _folderScheduler = FolderScheduler::instance();
+    connect( _folderScheduler, SIGNAL(folderSyncStateChange(QString)),
              this,SLOT(slotSyncStateChange(QString)));
-    _folderMan->setSyncEnabled(false);
+    _folderScheduler->setSyncEnabled(false);
 
     /* use a signal mapper to map the open requests to the alias names */
     _folderOpenActionMapper = new QSignalMapper(this);
@@ -129,7 +129,7 @@ Application::Application(int &argc, char **argv) :
 
     setQuitOnLastWindowClosed(false);
 
-    _owncloudSetupWizard = new OwncloudSetupWizard( _folderMan, _theme, this );
+    _owncloudSetupWizard = new OwncloudSetupWizard( _folderScheduler, _theme, this );
     connect( _owncloudSetupWizard, SIGNAL(ownCloudWizardDone(int)),
              this, SLOT(slotownCloudWizardDone(int)));
 
@@ -162,9 +162,9 @@ Application::Application(int &argc, char **argv) :
     setupSystemTray();
     setupProxy();
 
-    int cnt = _folderMan->setupFolders();
+    int cnt = _folderScheduler->setupFolders();
 
-//    _statusDialog->setFolderList( _folderMan->map() );
+//    _statusDialog->setFolderList( _folderScheduler->map() );
 
     // Check if the update check should be done.
     if( !cfg.ownCloudSkipUpdateCheck() ) {
@@ -219,20 +219,20 @@ void Application::slotConValidatorResult(ConnectionValidator::Status status)
         break;
     case ConnectionValidator::Connected:
         qDebug() << "Connection Validator Connected.";
-        _folderMan->setSyncEnabled(true);
+        _folderScheduler->setSyncEnabled(true);
 
         _tray->setIcon( _theme->syncStateIcon( SyncResult::NotYetStarted, true ) );
         _tray->show();
 
-        cnt = _folderMan->map().size();
+        cnt = _folderScheduler->map().size();
         if( _tray )
             _tray->showMessage(tr("%1 Sync Started").arg(_theme->appNameGUI()),
                                tr("Sync started for %1 configured sync folder(s).").arg(cnt));
 
         // queue up the sync for all folders.
-        _folderMan->slotScheduleAllFolders();
+        _folderScheduler->slotScheduleAllFolders();
 
-        QMetaObject::invokeMethod(_folderMan, "slotScheduleFolderSync");
+        QMetaObject::invokeMethod(_folderScheduler, "slotScheduleFolderSync");
 
         computeOverallSyncStatus();
 
@@ -329,11 +329,11 @@ void Application::slotSSLFailed( QNetworkReply *reply, QList<QSslError> errors )
 void Application::slotownCloudWizardDone( int res )
 {
     if( res == QDialog::Accepted ) {
-        int cnt = _folderMan->setupFolders();
+        int cnt = _folderScheduler->setupFolders();
         qDebug() << "Set up " << cnt << " folders.";
-//        _statusDialog->setFolderList( _folderMan->map() );
+//        _statusDialog->setFolderList( _folderScheduler->map() );
     }
-    _folderMan->setSyncEnabled( true );
+    _folderScheduler->setSyncEnabled( true );
     // slotStartFolderSetup( res );
 }
 
@@ -382,14 +382,14 @@ void Application::setupContextMenu()
 
     _contextMenu->addSeparator();
 
-    int folderCnt = _folderMan->map().size();
+    int folderCnt = _folderScheduler->map().size();
     // add open actions for all sync folders to the tray menu
     if( _theme->singleSyncFolder() ) {
         if( folderCnt != 0 ) {
             // there should be exactly one folder. No sync-folder add action will be shown.
-            QStringList li = _folderMan->map().keys();
+            QStringList li = _folderScheduler->map().keys();
             if( li.size() == 1 ) {
-                Folder *folder = _folderMan->map().value(li.first());
+                Folder *folder = _folderScheduler->map().value(li.first());
                 if( folder ) {
                     // if there is singleFolder mode, a generic open action is displayed.
                     QAction *action = new QAction( tr("Open %1 folder").arg(_theme->appNameGUI()), this);
@@ -407,7 +407,7 @@ void Application::setupContextMenu()
         if ( folderCnt ) {
             _contextMenu->addAction(tr("Managed Folders:"))->setDisabled(true);
         }
-        foreach (Folder *folder, _folderMan->map() ) {
+        foreach (Folder *folder, _folderScheduler->map() ) {
             QAction *action = new QAction( folder->alias(), this );
             action->setIcon( _theme->trayFolderIcon( folder->backend()) );
 
@@ -488,7 +488,7 @@ void Application::setupProxy()
  */
 void Application::slotFolderOpenAction( const QString& alias )
 {
-    Folder *f = _folderMan->folder(alias);
+    Folder *f = _folderScheduler->folder(alias);
     qDebug() << "opening local url " << f->path();
     if( f ) {
         QUrl url(f->path(), QUrl::TolerantMode);
@@ -547,12 +547,12 @@ void Application::slotTrayClicked( QSystemTrayIcon::ActivationReason reason )
 //    MirallConfigFile cfgFile;
 //    if( !cfgFile.exists() ) {
 //      qDebug() << "No configured folders yet, start the Owncloud integration dialog.";
-//      _folderMan->setSyncEnabled(false);
+//      _folderScheduler->setSyncEnabled(false);
 //      _owncloudSetupWizard->startWizard();
 //    } else {
 //      qDebug() << "#============# Status dialog starting #=============#";
 //      raiseWidget = _statusDialog;
-//      _statusDialog->setFolderList( _folderMan->map() );
+//      _statusDialog->setFolderList( _folderScheduler->map() );
 //    }
 //  }
 //  raiseDialog( raiseWidget );
@@ -602,7 +602,7 @@ void Application::slotRemoveFolder( const QString& alias )
         return;
     }
 
-    _folderMan->slotRemoveFolder( alias );
+    _folderScheduler->slotRemoveFolder( alias );
 //    _statusDialog->slotRemoveSelectedFolder( );
     computeOverallSyncStatus();
     setupContextMenu();
@@ -617,7 +617,7 @@ void Application::slotInfoFolder( const QString& alias )
         _fileItemDialog = new FileItemDialog(_theme);
     }
 
-    SyncResult folderResult = _folderMan->syncResult( alias );
+    SyncResult folderResult = _folderScheduler->syncResult( alias );
 
     _fileItemDialog->setSyncResult( folderResult );
     raiseDialog( _fileItemDialog );
@@ -629,7 +629,7 @@ void Application::slotEnableFolder(const QString& alias, const bool enable)
     bool terminate = false;
 
     // this sets the folder status to disabled but does not interrupt it.
-    Folder *f = _folderMan->folder( alias );
+    Folder *f = _folderScheduler->folder( alias );
     if( f && !enable ) {
         // check if a sync is still running and if so, ask if we should terminate.
         if( f->isBusy() ) { // its still running
@@ -646,9 +646,9 @@ void Application::slotEnableFolder(const QString& alias, const bool enable)
     // message box can return at any time while the thread keeps running,
     // so better check again after the user has responded.
     if ( f->isBusy() && terminate )
-        _folderMan->terminateSyncProcess( alias );
+        _folderScheduler->terminateSyncProcess( alias );
 
-    _folderMan->slotEnableFolder( alias, enable );
+    _folderScheduler->slotEnableFolder( alias, enable );
 //    _statusDialog->slotUpdateFolderState( f );
 }
 
@@ -673,12 +673,12 @@ void Application::slotShowTrayMessage(const QString &title, const QString &msg)
 
 void Application::slotSyncStateChange( const QString& alias )
 {
-    SyncResult result = _folderMan->syncResult( alias );
+    SyncResult result = _folderScheduler->syncResult( alias );
 
-    //        _statusDialog->slotUpdateFolderState( _folderMan->folder(alias) );
+    //        _statusDialog->slotUpdateFolderState( _folderScheduler->folder(alias) );
 
     if( _fileItemDialog && _fileItemDialog->isVisible() ) {
-        _fileItemDialog->setSyncResult( _folderMan->syncResult(alias) );
+        _fileItemDialog->setSyncResult( _folderScheduler->syncResult(alias) );
     }
     computeOverallSyncStatus();
 
@@ -722,7 +722,7 @@ void Application::computeOverallSyncStatus()
     // display the info of the least successful sync (eg. not just display the result of the latest sync
     SyncResult overallResult(SyncResult::Undefined );
     QString trayMessage;
-    Folder::Map map = _folderMan->map();
+    Folder::Map map = _folderScheduler->map();
 
     QStringList allStatusStrings;
 

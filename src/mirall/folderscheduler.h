@@ -29,12 +29,15 @@ namespace Mirall {
 
 class SyncResult;
 
-class FolderMan : public QObject
+/**
+ * @brief The FolderScheduler class schedules folders for sync
+ */
+class FolderScheduler : public QObject
 {
     Q_OBJECT
 public:
-    static FolderMan* instance();
-    ~FolderMan();
+    static FolderScheduler* instance();
+    ~FolderScheduler();
 
     int setupFolders();
 
@@ -90,8 +93,6 @@ public slots:
     void slotFolderSyncStarted();
     void slotFolderSyncFinished( const SyncResult& );
 
-    void slotReparseConfiguration();
-
     void terminateSyncProcess( const QString& );
 
     // if enabled is set to false, no new folders will start to sync.
@@ -108,10 +109,9 @@ private slots:
     void slotScheduleFolderSync();
 
 private:
-    FolderMan();
+    FolderScheduler();
     // finds all folder configuration files
     // and create the folders
-    int setupKnownFolders();
     void setupFavLink(const QString& folder);
     void terminateCurrentSync();
 
@@ -122,7 +122,6 @@ private:
 
     void removeFolder( const QString& );
 
-    FolderWatcher *_configFolderWatcher;
     Folder::Map    _folderMap;
     QString        _folderConfigPath;
     QSignalMapper *_folderChangeSignalMapper;
@@ -130,7 +129,7 @@ private:
     QStringList    _scheduleQueue;
     bool           _syncEnabled;
 
-    static FolderMan *_instance;
+    static FolderScheduler *_instance;
 };
 
 }

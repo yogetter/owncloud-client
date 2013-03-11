@@ -12,7 +12,19 @@
  */
 
 #include "utility.h"
+
+#include <QNetworkAccessManager>
+
+#ifdef Q_OS_MAC
+#include <CoreServices/CoreServices.h>
+#endif
+#ifdef Q_OS_WIN
+#include <shlobj.h>
+#endif
+
 namespace Mirall {
+
+static QNetworkAccessManager *s_qnam = 0;
 
 QString Utility::formatFingerprint( const QByteArray& fmhash )
 {
@@ -29,5 +41,46 @@ QString Utility::formatFingerprint( const QByteArray& fmhash )
 
     return fp;
 }
+
+void Utility::setupFavLink(const QString &folder)
+{
+#ifdef Q_OS_WIN
+    // Windows Explorer: Place under "Favorites" (Links)
+    wchar_t path[MAX_PATH];
+    SHGetSpecialFolderPath(0, path, CSIDL_PROFILE, FALSE);
+    QString profile =  QDir::fromNativeSeparators(QString::fromWCharArray(path));
+    QDir folderDir(QDir::fromNativeSeparators(folder));
+    QString linkName = profile+QLatin1String("/Links/") + folderDir.dirName() + QLatin1String(".lnk");
+    if (!QFile::link(folder, linkName))
+        qDebug() << Q_FUNC_INFO << "linking" << folder << "to" << linkName << "failed!";
+#elif defined (Q_OS_MAC)
+    // Finder: Place under "Places"
+    QString folderUrl = QUrl::fromLocalFile(folder).toString();
+    CFStringRef folderCFStr = CFStringCreateWithCharacters(0, reinterpret_cast<const UniChar *>(folderUrl.unicode()),
+                                                           folder.length());
+    CFURLRef urlRef = CFURLCreateWithString(NULL, folderCFStr, 0);
+    LSSharedFileListRef placesItems = LSSharedFileListCreate(0, kLSSharedFileListFavoriteItems, 0);
+    if (placesItems) {
+        //Insert an item to the list.
+        LSSharedFileListItemRef item = LSSharedFileListInsertItemURL(placesItems,
+                                                                     kLSSharedFileListItemBeforeFirst, 0, 0,
+                                                                     urlRef, 0, 0);
+        if (item)
+            CFRelease(item);
+    }
+    CFRelease(placesItems);
+    CFRelease(folderCFStr);
+    CFRelease(urlRef);
+#endif
+}
+
+QNetworkAccessManager* Utility::qnam()
+{
+    if(s_qnam == 0)
+        s_qnam = new QNetworkAccessManager;
+
+    return s_qnam;
+}
+
 
 }
