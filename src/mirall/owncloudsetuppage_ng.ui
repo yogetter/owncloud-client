@@ -201,15 +201,6 @@
        </property>
       </spacer>
      </item>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>40</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
      <item>
       <widget class="QCheckBox" name="cbAdvanced">
        <property name="sizePolicy">
@@ -378,26 +369,6 @@
     </widget>
    </item>
   </layout>
-    <layout class="QHBoxLayout" name="resultLayout"/>
-   </item>
-   <item row="7" column="0" colspan="3">
-    <widget class="QLabel" name="syncModeLabel">
-     <property name="text">
-      <string>Street Creds Homie!</string>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignCenter</set>
-     </property>
-    </widget>
-   </item>
-   <item row="8" column="0" colspan="3">
-    <widget class="QLabel" name="bottomLabel">
-     <property name="text">
-      <string>TextLabel</string>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="0" colspan="3">
  </widget>
  <customwidgets>
   <customwidget>
