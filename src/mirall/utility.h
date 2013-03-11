@@ -21,13 +21,12 @@ class QNetworkAccessManager;
 
 namespace Mirall {
 
-class Utility
+namespace Utility
 {
-public:
-    static QString formatFingerprint( const QByteArray& );
-    static void setupFavLink( const QString &folder );
-    static QNetworkAccessManager* qnam();
-};
+    QString formatFingerprint( const QByteArray& );
+    void setupFavLink( const QString &folder );
+    QNetworkAccessManager* qnam();
+}
 
 }
 #endif // UTILITY_H
