@@ -27,6 +27,21 @@
 
 namespace Mirall {
 
+
+
+//FolderPersistor* FolderPersistor::_instance = 0;
+
+//FolderPersistor* FolderPersistor::instance() {
+//    if (!_instance) {
+//        _instance = new FolderPersistor;
+//    }
+//    return _instance;
+//}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+
 FolderScheduler* FolderScheduler::_instance = 0;
 
 FolderScheduler* FolderScheduler::instance() {
@@ -324,7 +339,7 @@ void FolderScheduler::slotScheduleSync( const QString& alias )
     }
 
     if( ! _scheduleQueue.contains(alias )) {
-        _scheduleQueue.append(alias);
+        _scheduleQueue.enqueue(alias);
     } else {
         qDebug() << " II> Sync for folder " << alias << " already scheduled, do not enqueue!";
     }
@@ -357,7 +372,7 @@ void FolderScheduler::slotScheduleFolderSync()
 
     qDebug() << "XX slotScheduleFolderSync: folderQueue size: " << _scheduleQueue.count();
     if( ! _scheduleQueue.isEmpty() ) {
-        const QString alias = _scheduleQueue.takeFirst();
+        const QString alias = _scheduleQueue.dequeue();
         if( _folderMap.contains( alias ) ) {
             Folder *f = _folderMap[alias];
             _currentSyncFolder = alias;

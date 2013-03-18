@@ -16,29 +16,12 @@
 #include <QSettings>
 
 #include "mirall/mirallconfigfile.h"
-#include "mirall/folderman.h"
+#include "mirall/folderscheduler.h"
 
 
 namespace Mirall {
 
 OwncloudConnectionManager *OwncloudConnectionManager::_instance = 0;
-
-
-OwncloudConnection::OwncloudConnection(QObject *parent) :
-    QObject(parent)
-{
-}
-
-void OwncloudConnection::setUrl(const QUrl &url) const
-{
-    _url = url;
-}
-
-void OwncloudConnection::setCredentials(const QString &user, const QString &password)
-{
-    _user = user;
-    _password = password;
-}
 
 OwncloudConnectionManager *OwncloudConnectionManager::instance()
 {
@@ -75,9 +58,32 @@ void OwncloudConnectionManager::loadConnections()
 {
 }
 
+OwncloudConnectionManager::OwncloudConnectionManager()
+    : QObject(0)
+{
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+OwncloudConnection::OwncloudConnection(QObject *parent) :
+    QObject(parent)
+{
+}
+
+void OwncloudConnection::setUrl(const QUrl &url)
+{
+    _url = url;
+}
+
+void OwncloudConnection::setCredentials(const QString &user, const QString &password)
+{
+    _user = user;
+    _password = password;
+}
+
 void OwncloudConnection::addFolder(Folder *folder)
 {
-    _folders.add(folder);
+    _folders.insert(folder);
 }
 
 void OwncloudConnection::removeFolder(Folder *folder)
@@ -93,7 +99,7 @@ bool OwncloudConnection::isOnline() const
 QUrl OwncloudConnection::webdavUrl() const
 {
     QUrl webdav = _url;
-    QString path = webdav.path() + QLatin1String('/remote.php/webdav');
+    QString path = webdav.path() + QLatin1String("/remote.php/webdav");
     webdav.setPath(path);
     return webdav;
 }

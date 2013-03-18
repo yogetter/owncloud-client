@@ -14,13 +14,13 @@
 #ifndef OWNCLOUDCONNECTION_H
 #define OWNCLOUDCONNECTION_H
 
+#include <QSet>
+#include <QUrl>
+#include <QObject>
+
 namespace Mirall {
 
 class Folder;
-
-#include <QObject>
-#include <QSet>
-#include <QUrl>
 
 class OwncloudConnection;
 
@@ -41,6 +41,8 @@ public:
 private:
     OwncloudConnectionManager();
     QSet<OwncloudConnection *> _connections;
+
+    static OwncloudConnectionManager *_instance;
 };
 
 class OwncloudConnection : public QObject
@@ -56,7 +58,7 @@ public:
 
 protected:
     explicit OwncloudConnection(QObject *parent = 0);
-    void setUrl(const QUrl &url) const;
+    void setUrl(const QUrl &url);
     void setCredentials(const QString &user, const QString &password);
 
 signals:

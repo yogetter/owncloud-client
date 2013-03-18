@@ -13,8 +13,8 @@
  */
 
 
-#ifndef FOLDERMAN_H
-#define FOLDERMAN_H
+#ifndef FOLDERSCHEDULER_H
+#define FOLDERSCHEDULER_H
 
 #include <QObject>
 #include <QQueue>
@@ -126,11 +126,11 @@ private:
     QString        _folderConfigPath;
     QSignalMapper *_folderChangeSignalMapper;
     QString        _currentSyncFolder;
-    QStringList    _scheduleQueue;
+    QQueue<QString>_scheduleQueue;
     bool           _syncEnabled;
 
     static FolderScheduler *_instance;
 };
 
 }
-#endif // FOLDERMAN_H
+#endif // FOLDERSCHEDULER_H

@@ -80,6 +80,7 @@ set(libsync_SRCS
     mirall/logger.cpp
     mirall/utility.cpp
     mirall/connectionvalidator.cpp
+    mirall/owncloudconnection.cpp
 )
 set(libsync_HEADERS 
     mirall/folderscheduler.h
@@ -94,6 +95,7 @@ set(libsync_HEADERS
     mirall/logger.h
     mirall/theme.h
     mirall/connectionvalidator.h
+    mirall/owncloudconnection.h
 )
 
 IF( INOTIFY_FOUND )
