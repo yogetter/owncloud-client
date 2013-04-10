@@ -25,17 +25,24 @@ namespace Mirall {
 namespace Ui {
 class SettingsDialog;
 }
+class AccountSettings;
 
 class SettingsDialog : public QDialog
 {
     Q_OBJECT
-    
+
 public:
     explicit SettingsDialog(QWidget *parent = 0);
     ~SettingsDialog();
 
     void addAccount(const QString &title, QWidget *widget);
     
+public slots:
+    // Progress, parameter is
+    //  - filename
+    //  - progress bytes, overall size.
+    void slotFolderUploadProgress( const QString&, const QString&, long, long );
+
 private slots:
     void handleItemClick(int);
     void checkResetToOldItem(QListWidgetItem*, QListWidgetItem*);
@@ -44,6 +51,7 @@ private slots:
 private:
     Ui::SettingsDialog *_ui;
     QListWidgetItem *_addItem;
+    AccountSettings *_accountSettings;
 };
 
 }

@@ -496,11 +496,17 @@ int CSyncThread::getauth(const char *prompt,
 void CSyncThread::progress(const char *remote_url, enum csync_notify_type_e kind,
                                         long long o1, long long o2, void *userdata)
 {
-    (void) o1; (void) o2;
+    CSyncThread *thread = static_cast<CSyncThread*>(userdata);
+    QString path = QUrl::fromEncoded(remote_url).toString();
+
     if (kind == CSYNC_NOTIFY_FINISHED_DOWNLOAD) {
-        QString path = QUrl::fromEncoded(remote_url).toString();
-        CSyncThread *thread = static_cast<CSyncThread*>(userdata);
         thread->fileReceived(path);
+    } else if( kind == CSYNC_NOTIFY_START_UPLOAD ) {
+        thread->uploadProgress( path, 0, 0 ); // indicate the upload start.
+    } else if( kind == CSYNC_NOTIFY_PROGRESS ) {
+        thread->uploadProgress( path, o1, o2 );
+    } else if( kind == CSYNC_NOTIFY_FINISHED_UPLOAD ) {
+        thread->uploadProgress( path, o2, o2 );
     }
 }
 

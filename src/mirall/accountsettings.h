@@ -68,6 +68,8 @@ public slots:
     void slotOCInfoFail( QNetworkReply* );
     void slotDoubleClicked( const QModelIndex& );
     void slotFolderOpenAction( const QString& );
+    void slotSetProgress( const QString&, const QString&, long, long );
+
 private:
     void folderToModelItem( QStandardItem *, Folder * );
     Ui::AccountSettings *ui;

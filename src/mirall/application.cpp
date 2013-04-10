@@ -120,6 +120,9 @@ Application::Application(int &argc, char **argv) :
     _folderScheduler = FolderScheduler::instance();
     connect( _folderScheduler, SIGNAL(folderSyncStateChange(QString)),
              this,SLOT(slotSyncStateChange(QString)));
+    connect( _folderScheduler, SIGNAL(folderUploadProgress(QString,QString,long,long)),
+             this, SLOT(slotFolderUploadProgress(QString, QString, long, long)));
+
     _folderScheduler->setSyncEnabled(false);
 
     /* use a signal mapper to map the open requests to the alias names */
@@ -190,6 +193,8 @@ Application::~Application()
     if( _fileItemDialog) delete _fileItemDialog;
 //    if( _statusDialog && ! _helpOnly)  delete _statusDialog;
     delete _conValidator;
+    if( _settingsDialog )
+        delete _settingsDialog;
 
     qDebug() << "* Mirall shutdown";
 }
@@ -685,12 +690,18 @@ void Application::slotSyncStateChange( const QString& alias )
     qDebug() << "Sync state changed for folder " << alias << ": "  << result.statusString();
 }
 
+void Application::slotFolderUploadProgress( const QString& folderAlias, const QString& file, long p1, long p2)
+{
+    if( _settingsDialog ) {
+        _settingsDialog->slotFolderUploadProgress( folderAlias, file, p1, p2 );
+    }
+}
+
 void Application::parseOptions(const QStringList &options)
 {
     QStringListIterator it(options);
     // skip file name;
     if (it.hasNext()) it.next();
-
     //parse options; if help or bad option exit
     while (it.hasNext()) {
         QString option = it.next();

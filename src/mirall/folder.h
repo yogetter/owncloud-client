@@ -154,6 +154,7 @@ signals:
     void syncStarted();
     void syncFinished(const SyncResult &result);
     void scheduleToSync( const QString& );
+    void uploadProgress( const QString&, long, long );
 
 public slots:
      void slotSyncFinished(const SyncResult &);

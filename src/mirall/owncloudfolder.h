@@ -86,6 +86,7 @@ private slots:
     void slotCSyncError(const QString& );
     void slotCsyncUnavailable();
     void slotCSyncFinished();
+    void slotUploadProgress(const QString&,long, long);
 
 private:
     QString      _secondPath;

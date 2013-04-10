@@ -148,6 +148,7 @@ void ownCloudFolder::startSync(const QStringList &pathList)
     connect(_csync, SIGNAL(finished()), SLOT(slotCSyncFinished()), Qt::QueuedConnection);
     connect(_csync, SIGNAL(csyncError(QString)), SLOT(slotCSyncError(QString)), Qt::QueuedConnection);
     connect(_csync, SIGNAL(csyncUnavailable()), SLOT(slotCsyncUnavailable()), Qt::QueuedConnection);
+    connect(_csync, SIGNAL(uploadProgress(QString,long,long)), SLOT(slotUploadProgress(QString,long,long)));
     _thread->start();
     QMetaObject::invokeMethod(_csync, "startSync", Qt::QueuedConnection);
     emit syncStarted();
@@ -169,6 +170,12 @@ void ownCloudFolder::slotCSyncError(const QString& err)
 void ownCloudFolder::slotCsyncUnavailable()
 {
     _csyncUnavail = true;
+}
+
+void ownCloudFolder::slotUploadProgress(const QString& file ,long p1, long p2)
+{
+    qDebug() << "Upload Progress: " << file << p1 << p2;
+    emit uploadProgress( file, p1, p2 );
 }
 
 void ownCloudFolder::slotCSyncFinished()

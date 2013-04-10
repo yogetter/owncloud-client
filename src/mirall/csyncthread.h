@@ -53,6 +53,7 @@ signals:
     void csyncWarning( const QString& );
     void csyncUnavailable();
     void treeWalkResult(const SyncFileItemVector&);
+    void uploadProgress( const QString&, long, long );
 
     void csyncStateDbFile( const QString& );
     void wipeDb();

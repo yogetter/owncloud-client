@@ -6,24 +6,31 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>300</height>
+    <width>532</width>
+    <height>377</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="0" colspan="2">
+   <item row="0" column="0">
+    <widget class="QLabel" name="connectLabel">
+     <property name="text">
+      <string>Connected with &lt;server&gt; as &lt;user&gt;</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QLabel" name="fileProgressLabel">
+     <property name="text">
+      <string>no activity.</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0">
     <widget class="QWidget" name="widget" native="true">
      <layout class="QVBoxLayout" name="verticalLayout">
-      <item>
-       <widget class="QLabel" name="connectLabel">
-        <property name="text">
-         <string>Connected with &lt;server&gt; as &lt;user&gt;</string>
-        </property>
-       </widget>
-      </item>
       <item>
        <widget class="QProgressBar" name="progressBar">
         <property name="value">
@@ -57,10 +64,10 @@
      </layout>
     </widget>
    </item>
-   <item row="1" column="0">
+   <item row="3" column="0">
     <widget class="QListView" name="_folderList"/>
    </item>
-   <item row="1" column="1">
+   <item row="3" column="1">
     <layout class="QVBoxLayout" name="verticalLayout_2">
      <item>
       <widget class="QPushButton" name="_ButtonAdd">

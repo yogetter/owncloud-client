@@ -54,7 +54,8 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
     _addItem->setSizeHint(QSize(0, 32));
     _ui->labelWidget->addItem(_addItem);
 
-    addAccount(tr("Account"), new AccountSettings);
+    _accountSettings = new AccountSettings;
+    addAccount(tr("Account"), _accountSettings);
 
     QPushButton *closeButton = _ui->buttonBox->button(QDialogButtonBox::Close);
     connect(closeButton, SIGNAL(pressed()), SLOT(accept()));
@@ -101,5 +102,12 @@ void SettingsDialog::asyncSwitch(int row)
 {
     _ui->labelWidget->setCurrentRow(row);
 }
+
+void SettingsDialog::slotFolderUploadProgress( const QString& folderAlias, const QString& file, long p1, long p2)
+{
+    qDebug() << " SettingsDialog: XX - File " << file << p1 << p2;
+    _accountSettings->slotSetProgress(folderAlias, file, p1, p2);
+}
+
 
 } // namespace Mirall

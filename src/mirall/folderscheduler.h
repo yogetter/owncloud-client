@@ -86,6 +86,8 @@ signals:
       */
     void folderSyncStateChange( const QString & );
 
+    void folderUploadProgress( const QString&, const QString&, long, long );
+
 public slots:
     void slotRemoveFolder( const QString& );
     void slotEnableFolder( const QString&, bool );
@@ -107,6 +109,8 @@ private slots:
 
     // slot to take the next folder from queue and start syncing.
     void slotScheduleFolderSync();
+
+    void slotUploadProgress( const QString&, long, long );
 
 private:
     FolderScheduler();

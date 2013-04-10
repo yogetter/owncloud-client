@@ -264,7 +264,8 @@ Folder* FolderScheduler::setupFolderFromConfigFile(const QString &file) {
         connect(folder, SIGNAL(syncStateChange()), _folderChangeSignalMapper, SLOT(map()));
         connect(folder, SIGNAL(syncStarted()), SLOT(slotFolderSyncStarted()));
         connect(folder, SIGNAL(syncFinished(SyncResult)), SLOT(slotFolderSyncFinished(SyncResult)));
-
+        connect(folder, SIGNAL(uploadProgress( const QString&, long, long )),
+                SLOT(slotUploadProgress( const QString&, long, long )));
         _folderChangeSignalMapper->setMapping( folder, folder->alias() );
     }
     return folder;
@@ -379,6 +380,12 @@ void FolderScheduler::slotScheduleFolderSync()
             f->startSync( QStringList() );
         }
     }
+}
+
+void FolderScheduler::slotUploadProgress( const QString& fileName, long p1, long p2 )
+{
+    qDebug() << "XXXX";
+    emit folderUploadProgress(_currentSyncFolder, fileName, p1, p2 );
 }
 
 void FolderScheduler::slotFolderSyncStarted( )

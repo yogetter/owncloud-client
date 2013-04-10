@@ -403,7 +403,26 @@ void AccountSettings::slotOpenOC()
     QDesktopServices::openUrl( _OCUrl );
 }
 
-
+void AccountSettings::slotSetProgress( const QString& folder, const QString& file, long p1, long p2 )
+{
+    if( p1 == 0 && p2 > 0 ) {
+        // sync start
+        ui->progressBar->setMaximum( p2 );
+        ui->progressBar->setValue( p1 );
+        ui->progressBar->setEnabled(true);
+        ui->fileProgressLabel->setText(tr("Uploading %1").arg(file));
+        // ui->progressBar->show();
+    } else if( p1 == p2 ) {
+        // sync end
+        // ui->progressBar->setMaximum(0);
+        ui->progressBar->setValue(0);
+        ui->progressBar->setEnabled(false);
+        ui->fileProgressLabel->setText(tr("No activity."));
+        // ui->progressBar->hide();
+    } else {
+        ui->progressBar->setValue( p1 );
+    }
+}
 
 AccountSettings::~AccountSettings()
 {

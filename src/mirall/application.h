@@ -92,6 +92,8 @@ protected slots:
     void slotUseMonoIconsChanged(bool);
 
     void slotConValidatorResult(ConnectionValidator::Status);
+    void slotFolderUploadProgress( const QString&, const QString&, long, long);
+
 private:
     void setHelp();
     void raiseDialog( QWidget* );
