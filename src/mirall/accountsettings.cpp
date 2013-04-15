@@ -34,6 +34,7 @@ AccountSettings::AccountSettings(QWidget *parent) :
     _item(0)
 {
     ui->setupUi(this);
+    disableProgressBar();
 
     _model = new FolderStatusModel;
     FolderViewDelegate *delegate = new FolderViewDelegate;
@@ -403,22 +404,34 @@ void AccountSettings::slotOpenOC()
     QDesktopServices::openUrl( _OCUrl );
 }
 
+void AccountSettings::enableProgressBar( const QString& file, int maximum )
+{
+    ui->progressBar->setMaximum( maximum );
+
+    ui->progressBar->setEnabled(true);
+    ui->fileProgressLabel->setText(tr("Uploading %1").arg(file));
+
+}
+
+void AccountSettings::disableProgressBar()
+{
+    // ui->progressBar->setMaximum(0);
+    ui->progressBar->setValue(0);
+    ui->progressBar->setEnabled(false);
+    ui->fileProgressLabel->setText(tr("No activity."));
+    // ui->progressBar->hide();
+}
+
 void AccountSettings::slotSetProgress( const QString& folder, const QString& file, long p1, long p2 )
 {
     if( p1 == 0 && p2 > 0 ) {
         // sync start
-        ui->progressBar->setMaximum( p2 );
+        enableProgressBar( file, p2 );
         ui->progressBar->setValue( p1 );
-        ui->progressBar->setEnabled(true);
-        ui->fileProgressLabel->setText(tr("Uploading %1").arg(file));
-        // ui->progressBar->show();
+    // ui->progressBar->show();
     } else if( p1 == p2 ) {
         // sync end
-        // ui->progressBar->setMaximum(0);
-        ui->progressBar->setValue(0);
-        ui->progressBar->setEnabled(false);
-        ui->fileProgressLabel->setText(tr("No activity."));
-        // ui->progressBar->hide();
+        disableProgressBar();
     } else {
         ui->progressBar->setValue( p1 );
     }

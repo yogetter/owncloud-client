@@ -18,6 +18,7 @@
 #include "mirall/owncloudinfo.h"
 #include "mirall/credentialstore.h"
 #include "mirall/logger.h"
+#include "mirall/progressdispatcher.h"
 
 #include <csync.h>
 
@@ -174,8 +175,8 @@ void ownCloudFolder::slotCsyncUnavailable()
 
 void ownCloudFolder::slotUploadProgress(const QString& file ,long p1, long p2)
 {
-    qDebug() << "Upload Progress: " << file << p1 << p2;
-    emit uploadProgress( file, p1, p2 );
+    // qDebug() << "Upload Progress: " << file << p1 << p2;
+    ProgressDispatcher::instance()->folderUploadProgress( alias(), file, p1, p2 );
 }
 
 void ownCloudFolder::slotCSyncFinished()

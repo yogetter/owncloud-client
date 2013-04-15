@@ -382,12 +382,6 @@ void FolderScheduler::slotScheduleFolderSync()
     }
 }
 
-void FolderScheduler::slotUploadProgress( const QString& fileName, long p1, long p2 )
-{
-    qDebug() << "XXXX";
-    emit folderUploadProgress(_currentSyncFolder, fileName, p1, p2 );
-}
-
 void FolderScheduler::slotFolderSyncStarted( )
 {
     qDebug() << ">===================================== sync started for " << _currentSyncFolder;

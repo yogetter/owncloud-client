@@ -72,6 +72,9 @@ public slots:
 
 private:
     void folderToModelItem( QStandardItem *, Folder * );
+    void disableProgressBar();
+    void enableProgressBar( const QString&, int );
+
     Ui::AccountSettings *ui;
     QStandardItemModel *_model;
     QListWidgetItem *_item;
