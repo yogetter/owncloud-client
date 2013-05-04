@@ -120,8 +120,6 @@ Application::Application(int &argc, char **argv) :
     _folderScheduler = FolderScheduler::instance();
     connect( _folderScheduler, SIGNAL(folderSyncStateChange(QString)),
              this,SLOT(slotSyncStateChange(QString)));
-    connect( _folderScheduler, SIGNAL(folderUploadProgress(QString,QString,long,long)),
-             this, SLOT(slotFolderUploadProgress(QString, QString, long, long)));
 
     _folderScheduler->setSyncEnabled(false);
 
@@ -680,7 +678,7 @@ void Application::slotSyncStateChange( const QString& alias )
 {
     SyncResult result = _folderScheduler->syncResult( alias );
 
-    //        _statusDialog->slotUpdateFolderState( _folderScheduler->folder(alias) );
+    // _statusDialog->slotUpdateFolderState( _folderScheduler->folder(alias) );
 
     if( _fileItemDialog && _fileItemDialog->isVisible() ) {
         _fileItemDialog->setSyncResult( _folderScheduler->syncResult(alias) );
@@ -688,13 +686,6 @@ void Application::slotSyncStateChange( const QString& alias )
     computeOverallSyncStatus();
 
     qDebug() << "Sync state changed for folder " << alias << ": "  << result.statusString();
-}
-
-void Application::slotFolderUploadProgress( const QString& folderAlias, const QString& file, long p1, long p2)
-{
-    if( _settingsDialog ) {
-        _settingsDialog->slotFolderUploadProgress( folderAlias, file, p1, p2 );
-    }
 }
 
 void Application::parseOptions(const QStringList &options)

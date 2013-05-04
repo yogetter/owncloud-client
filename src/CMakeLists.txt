@@ -97,7 +97,7 @@ set(libsync_HEADERS
     mirall/theme.h
     mirall/connectionvalidator.h
     mirall/owncloudconnection.h
-    mirall/progressdispatcher.cpp
+    mirall/progressdispatcher.h
 )
 
 IF( INOTIFY_FOUND )
@@ -196,7 +196,7 @@ if( UNIX AND NOT APPLE)
 endif()
 
 # csync is required.
-include_directories(${CSYNC_INCLUDE_DIR}/csync ${CSYNC_INCLUDE_DIR} ${CMAKE_BINARY_DIR})
+include_directories(${CSYNC_INCLUDE_DIR}/csync ${CSYNC_BINARY_DIR}/src ${CSYNC_INCLUDE_DIR} ${CMAKE_BINARY_DIR})
 include_directories(${3rdparty_INC})
 
 qt4_wrap_cpp(mirallMoc ${mirall_HEADERS})

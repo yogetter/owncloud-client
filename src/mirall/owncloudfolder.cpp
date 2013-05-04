@@ -176,7 +176,7 @@ void ownCloudFolder::slotCsyncUnavailable()
 void ownCloudFolder::slotUploadProgress(const QString& file ,long p1, long p2)
 {
     // qDebug() << "Upload Progress: " << file << p1 << p2;
-    ProgressDispatcher::instance()->folderUploadProgress( alias(), file, p1, p2 );
+    ProgressDispatcher::instance()->setFolderUploadProgress( alias(), file, p1, p2 );
 }
 
 void ownCloudFolder::slotCSyncFinished()

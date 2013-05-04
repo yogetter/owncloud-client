@@ -109,7 +109,7 @@ void OwncloudSetupPage::slotToggleAdvanced(int state)
 
 void OwncloudSetupPage::slotChangedSelective(QAbstractButton* button)
 {
-    if( button = _ui.pbBoxMode ) {
+    if( button == _ui.pbBoxMode ) {
         // box mode - sync the entire oC
     } else {
         // content mode, select folder list.

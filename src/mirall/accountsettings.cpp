@@ -58,6 +58,9 @@ AccountSettings::AccountSettings(QWidget *parent) :
     connect(ui->_folderList, SIGNAL(clicked(QModelIndex)), SLOT(slotFolderActivated(QModelIndex)));
     connect(ui->_folderList, SIGNAL(doubleClicked(QModelIndex)),SLOT(slotDoubleClicked(QModelIndex)));
 
+    connect( FolderScheduler::instance(), SIGNAL(folderSyncStateChange(QString)),
+             this,SLOT(slotSyncStateChange(QString)));
+
     ui->connectLabel->setWordWrap( true );
 
     setFolderList(FolderScheduler::instance()->map());
@@ -121,12 +124,12 @@ void AccountSettings::setListWidgetItem( QListWidgetItem *item )
     _item = item;
 }
 
-void AccountSettings::slotUpdateFolderState( Folder *folder )
+QStandardItem* AccountSettings::folderItem( Folder *folder )
 {
     QStandardItem *item = 0;
     int row = 0;
 
-    if( ! folder ) return;
+    if( ! folder ) return 0;
 
     item = _model->item( row );
 
@@ -137,12 +140,51 @@ void AccountSettings::slotUpdateFolderState( Folder *folder )
         }
         item = _model->item( ++row );
     }
+    return item;
+}
+
+void AccountSettings::slotUpdateFolderState( const QString& folderName )
+{
+    Folder *folder = 0;
+    QStandardItem *item = 0;
+
+    if( folderName.isEmpty() ) {
+        return;
+    }
+
+    folder = FolderScheduler::instance()->folder(folderName);
+    item = folderItem( folder );
+
     if( item ) {
         folderToModelItem( item, folder );
     } else {
         // the dialog is not visible.
     }
     slotCheckConnection();
+}
+
+void AccountSettings::slotSetFolderProgress( const QString& folderName, const QString& file,
+                                      long p1, long p2 )
+{
+    Folder *folder = 0;
+
+    QStandardItem *item = 0;
+
+    if( folderName.isEmpty() ) {
+        return;
+    }
+
+    folder = FolderScheduler::instance()->folder(folderName);
+    item = folderItem( folder );
+
+    if( item ) {
+        QVariant v;
+        item->setData( file,  FolderViewDelegate::SyncFileName  );
+        v.setValue(p1);
+        item->setData( v,    FolderViewDelegate::SyncProgress1 );
+        v.setValue(p2);
+        item->setData( v,    FolderViewDelegate::SyncProgress2 );
+    }
 }
 
 void AccountSettings::folderToModelItem( QStandardItem *item, Folder *f )
@@ -422,20 +464,6 @@ void AccountSettings::disableProgressBar()
     // ui->progressBar->hide();
 }
 
-void AccountSettings::slotSetProgress( const QString& folder, const QString& file, long p1, long p2 )
-{
-    if( p1 == 0 && p2 > 0 ) {
-        // sync start
-        enableProgressBar( file, p2 );
-        ui->progressBar->setValue( p1 );
-    // ui->progressBar->show();
-    } else if( p1 == p2 ) {
-        // sync end
-        disableProgressBar();
-    } else {
-        ui->progressBar->setValue( p1 );
-    }
-}
 
 AccountSettings::~AccountSettings()
 {

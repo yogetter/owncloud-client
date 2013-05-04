@@ -17,6 +17,7 @@
 #include "mirall/theme.h"
 #include "mirall/generalsettings.h"
 #include "mirall/accountsettings.h"
+#include "mirall/progressdispatcher.h"
 
 #include <QLabel>
 #include <QStandardItemModel>
@@ -42,6 +43,9 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
             SLOT(handleItemClick(int)));
     connect(_ui->labelWidget, SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)),
             SLOT(checkResetToOldItem(QListWidgetItem*,QListWidgetItem*)));
+
+    connect( ProgressDispatcher::instance(), SIGNAL(folderUploadProgress(QString,QString,long,long)),
+             SLOT(slotFolderUploadProgress(QString,QString,long,long)));
 
     QListWidgetItem *general = new QListWidgetItem(tr("General"), _ui->labelWidget);
     general->setSizeHint(QSize(0, 32));
@@ -106,7 +110,7 @@ void SettingsDialog::asyncSwitch(int row)
 void SettingsDialog::slotFolderUploadProgress( const QString& folderAlias, const QString& file, long p1, long p2)
 {
     qDebug() << " SettingsDialog: XX - File " << file << p1 << p2;
-    _accountSettings->slotSetProgress(folderAlias, file, p1, p2);
+    _accountSettings->slotSetFolderProgress(folderAlias, file, p1, p2);
 }
 
 

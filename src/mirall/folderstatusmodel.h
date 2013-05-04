@@ -52,7 +52,10 @@ class FolderViewDelegate : public QStyledItemDelegate
                     FolderStatus         = Qt::UserRole + 105,
                     FolderErrorMsg       = Qt::UserRole + 106,
                     FolderStatusIcon     = Qt::UserRole + 107,
-                    FolderSyncEnabled    = Qt::UserRole + 108
+                    FolderSyncEnabled    = Qt::UserRole + 108,
+                    SyncFileName         = Qt::UserRole + 109,
+                    SyncProgress1        = Qt::UserRole + 110,
+                    SyncProgress2        = Qt::UserRole + 111,
     };
     void paint( QPainter*, const QStyleOptionViewItem&, const QModelIndex& ) const;
     QSize sizeHint( const QStyleOptionViewItem&, const QModelIndex& ) const;

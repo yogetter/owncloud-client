@@ -67,6 +67,7 @@ QSize FolderViewDelegate::sizeHint(const QStyleOptionViewItem & option ,
   int w = 0;
 
   QString p = qvariant_cast<QString>(index.data(FolderPathRole));
+  QString syncFile = qvariant_cast<QString>(index.data(SyncFileName));
   QFont aliasFont = QApplication::font();
   QFont font = QApplication::font();
   aliasFont.setPointSize( font.pointSize() +2 );
@@ -92,6 +93,10 @@ QSize FolderViewDelegate::sizeHint(const QStyleOptionViewItem & option ,
 
   if( h < minHeight ) h = minHeight;
 
+  if( !syncFile.isEmpty() ) {
+      h *= 2;
+  }
+
   // add some space to show an error condition.
   if( ! qvariant_cast<QString>(index.data(FolderErrorMsg)).isEmpty() ) {
       h += margin+fm.height();
@@ -107,8 +112,9 @@ void FolderViewDelegate::paint(QPainter *painter, const QStyleOptionViewItem &op
 
   painter->save();
 
-  QFont aliasFont    = QApplication::font();
-  QFont subFont = QApplication::font();
+  QFont aliasFont = option.font;
+  QFont subFont   = option.font;
+
   QFont errorFont = subFont;
 
   //font.setPixelSize(font.weight()+);
@@ -125,6 +131,9 @@ void FolderViewDelegate::paint(QPainter *painter, const QStyleOptionViewItem &op
   QString pathText = qvariant_cast<QString>(index.data(FolderPathRole));
   QString remotePath = qvariant_cast<QString>(index.data(FolderSecondPathRole));
   QString errorText  = qvariant_cast<QString>(index.data(FolderErrorMsg));
+  QString syncFile   = qvariant_cast<QString>(index.data(SyncFileName));
+  long    progress1  = qvariant_cast<long>(index.data(SyncProgress1));
+  long    progress2  = qvariant_cast<long>(index.data(SyncProgress2));
 
   // QString statusText = qvariant_cast<QString>(index.data(FolderStatus));
   bool syncEnabled = index.data(FolderSyncEnabled).toBool();
@@ -205,6 +214,40 @@ void FolderViewDelegate::paint(QPainter *painter, const QStyleOptionViewItem &op
       painter->drawText(errorTextRect, eText);
   }
 
+  // paint sync progress if there is an sync  file name
+  if( !syncFile.isEmpty() ) {
+      QRect progressRect = localPathRect;
+      progressRect.setLeft( iconRect.left());
+      progressRect.setTop( iconRect.bottom()+subFm.height()/2 );
+      progressRect.setHeight( 48 );
+      progressRect.setRight( statusRect.right() );
+
+      painter->setBrush( QColor(0xcc, 0xcc, 0xcc) );
+      painter->setPen( QColor(0xaa, 0xaa, 0xaa));
+      painter->drawRoundedRect( progressRect, 4, 4 );
+
+      QRect r1 = progressRect;
+      r1.setLeft( r1.left()+margin/2 +16 );
+      r1.setTop( r1.top()+margin/2 );
+      QString pText = tr("File %1: ").arg(syncFile);
+      painter->drawText(r1, pText);
+
+      QRect r2 = r1;
+      r2.setTop( r2.top() + subFm.height()+margin );
+
+      QStyleOptionProgressBarV2 opt;
+      opt.state    = option.state | QStyle::State_Horizontal;
+      opt.minimum  = 0;
+      opt.maximum  = progress2;
+      opt.progress = progress1;
+      opt.orientation = Qt::Horizontal;
+      opt.palette = option.palette;
+      opt.rect = r1;
+
+      QApplication::style()->drawControl( QStyle::CE_ProgressBar, &opt, painter );
+
+
+  }
   // painter->drawText(lastSyncRect, tr("Last Sync: %1").arg( statusText ));
   // painter->drawText(statusRect, tr("Sync Status: %1").arg( syncStatus ));
   painter->restore();

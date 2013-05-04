@@ -92,7 +92,6 @@ protected slots:
     void slotUseMonoIconsChanged(bool);
 
     void slotConValidatorResult(ConnectionValidator::Status);
-    void slotFolderUploadProgress( const QString&, const QString&, long, long);
 
 private:
     void setHelp();
@@ -113,14 +112,14 @@ private:
 
     // tray's menu
     QMenu *_contextMenu;
-    FileItemDialog *_fileItemDialog;
-    SettingsDialog *_settingsDialog;
-    FolderScheduler *_folderScheduler;
+    FileItemDialog      *_fileItemDialog;
+    SettingsDialog      *_settingsDialog;
+    FolderScheduler     *_folderScheduler;
     Theme *_theme;
-    QSignalMapper *_folderOpenActionMapper;
-    UpdateDetector *_updateDetector;
-    LogBrowser *_logBrowser;
-    ConnectionValidator* _conValidator;
+    QSignalMapper       *_folderOpenActionMapper;
+    UpdateDetector      *_updateDetector;
+    LogBrowser          *_logBrowser;
+    ConnectionValidator * _conValidator;
 
     QString _logFile;
     bool _showLogWindow;

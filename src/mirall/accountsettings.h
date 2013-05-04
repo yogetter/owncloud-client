@@ -62,18 +62,19 @@ public slots:
     void slotOpenOC();
     void slotEnableFolder();
     void slotInfoFolder();
-    void slotUpdateFolderState( Folder* );
+    void slotUpdateFolderState( const QString& );
     void slotCheckConnection();
     void slotOCInfo( const QString&, const QString&, const QString&, const QString& );
     void slotOCInfoFail( QNetworkReply* );
     void slotDoubleClicked( const QModelIndex& );
     void slotFolderOpenAction( const QString& );
-    void slotSetProgress( const QString&, const QString&, long, long );
+    void slotSetFolderProgress( const QString&, const QString&, long, long );
 
 private:
     void folderToModelItem( QStandardItem *, Folder * );
     void disableProgressBar();
     void enableProgressBar( const QString&, int );
+    QStandardItem* folderItem( Folder* );
 
     Ui::AccountSettings *ui;
     QStandardItemModel *_model;

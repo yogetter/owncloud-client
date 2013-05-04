@@ -264,8 +264,6 @@ Folder* FolderScheduler::setupFolderFromConfigFile(const QString &file) {
         connect(folder, SIGNAL(syncStateChange()), _folderChangeSignalMapper, SLOT(map()));
         connect(folder, SIGNAL(syncStarted()), SLOT(slotFolderSyncStarted()));
         connect(folder, SIGNAL(syncFinished(SyncResult)), SLOT(slotFolderSyncFinished(SyncResult)));
-        connect(folder, SIGNAL(uploadProgress( const QString&, long, long )),
-                SLOT(slotUploadProgress( const QString&, long, long )));
         _folderChangeSignalMapper->setMapping( folder, folder->alias() );
     }
     return folder;
