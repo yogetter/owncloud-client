@@ -253,10 +253,12 @@ void ownCloudInfo::slotGetQuotaFinished()
                     reader.namespaceUri() == QLatin1String("DAV:")) {
                 QString name = reader.name().toString();
                 if (name == QLatin1String("quota-used-bytes")) {
-                    quotaUsedBytes = reader.readElementText().toLongLong(&ok);
+                    QString txt = reader.readElementText();
+                    quotaUsedBytes = txt.toLongLong(&ok);
                     if (!ok) quotaUsedBytes = 0;
                 } else if (name == QLatin1String("quota-available-bytes")) {
-                    quotaAvailableBytes = reader.readElementText().toLongLong(&ok);
+                    QString txt = reader.readElementText();
+                    quotaAvailableBytes = txt.toLongLong(&ok);
                     if (!ok) quotaAvailableBytes = 0;
                 } else if (name == QLatin1String("getetag")) {
                     etag = reader.readElementText();

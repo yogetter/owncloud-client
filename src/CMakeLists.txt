@@ -198,7 +198,7 @@ set(mirall_SRCS
     mirall/accountsettings.cpp
     mirall/ignorelisteditor.cpp
     mirall/itemprogressdialog.cpp
-    mirall/socketapi/socketapi.cpp
+    mirall/socketapi.cpp
 )
 
 set(mirall_HEADERS
@@ -223,7 +223,7 @@ set(mirall_HEADERS
     mirall/accountsettings.h
     mirall/ignorelisteditor.h
     mirall/itemprogressdialog.h
-    mirall/socketapi/socketapi.h
+    mirall/socketapi.h
 )
 
 if( UNIX AND NOT APPLE)

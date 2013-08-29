@@ -38,7 +38,7 @@
 #include "mirall/utility.h"
 #include "mirall/inotify.h"
 #include "mirall/connectionvalidator.h"
-#include "mirall/socketapi/socketapi.h"
+#include "mirall/socketapi.h"
 
 #include "creds/abstractcredentials.h"
 
