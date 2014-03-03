@@ -81,7 +81,10 @@ void FolderWatcherPrivate::inotifyRegisterPath(const QString& path)
                                    IN_MOVE_SELF |IN_UNMOUNT |IN_ONLYDIR |
                                    IN_DONT_FOLLOW );
         if( wd > -1 ) {
-            _watches.insert(wd, path);
+            QString p(path);
+            // make sure the path ends with a "/"
+            if( ! path.endsWith("/")) p.append(QChar('/'));
+            _watches.insert(wd, p);
          }
     }
 }
@@ -173,13 +176,11 @@ void FolderWatcherPrivate::slotReceivedNotification(int fd)
         // Note: The name of the changed file and stuff could be taken from
         // the event data structure. That does not happen yet.
         if (event->len > 0 && event->wd > -1) {
+            const QString p = _watches[event->wd]; // pathes have a trailing slash.
+            QString changeFile = p + QString::fromUtf8(event->name);
             qDebug() << Q_FUNC_INFO << event->name;
-            if (QByteArray(event->name).startsWith(".csync")) {
-                qDebug() << "ignore journal";
-            } else {
-                const QString p = _watches[event->wd];
-                _parent->changeDetected(p);
-            }
+
+            _parent->fileChangeDetected(changeFile);
         }
 
         // increment counter

@@ -36,6 +36,7 @@ public:
     void startWatching();
     void doNotifyParent();
 
+    void doNotifyParent( const QStringList& pathList );
 private:
     FolderWatcher *_parent;
 

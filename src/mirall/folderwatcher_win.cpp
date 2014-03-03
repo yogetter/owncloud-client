@@ -25,12 +25,24 @@ namespace Mirall {
 
 void WatcherThread::run()
 {
+#if 0
     _handle = FindFirstChangeNotification((wchar_t*)_path.utf16(),
                                          true, // recursive watch
                                          FILE_NOTIFY_CHANGE_FILE_NAME |
                                          FILE_NOTIFY_CHANGE_DIR_NAME |
                                          FILE_NOTIFY_CHANGE_LAST_WRITE);
-
+#else
+    // USES_CONVERSION;
+    _handle = CreateFile(
+      (wchar_t*)_path.utf16(), /* pointer to the file name */
+      FILE_LIST_DIRECTORY,                /* access (read-write) mode */
+      FILE_SHARE_READ|FILE_SHARE_DELETE,  /* share mode */
+      NULL, /* security descriptor */
+      OPEN_EXISTING, /* how to create */
+      FILE_FLAG_BACKUP_SEMANTICS, /* file attributes */
+      NULL /* file with attributes to copy */
+    );
+#endif
     if (_handle == INVALID_HANDLE_VALUE)
     {
         qDebug() << Q_FUNC_INFO << "FindFirstChangeNotification function failed, stopping watcher!";
@@ -48,6 +60,7 @@ void WatcherThread::run()
     }
 
     while(true) {
+#if 0
         switch(WaitForSingleObject(_handle, /*wait*/ INFINITE)) {
         case WAIT_OBJECT_0:
             if (FindNextChangeNotification(_handle) == false) {
@@ -62,6 +75,28 @@ void WatcherThread::run()
         default:
             qDebug()  << Q_FUNC_INFO << "Error while watching";
         }
+#else
+        FILE_NOTIFY_INFORMATION Buffer[32*1024];
+        DWORD BytesReturned;
+        while( ReadDirectoryChangesW(
+                   _handle, /* handle to directory */
+                   &Buffer, /* read results buffer */
+                   sizeof(Buffer), /* length of buffer */
+                   TRUE, /* monitoring option */
+                   FILE_NOTIFY_CHANGE_SECURITY|
+                   FILE_NOTIFY_CHANGE_CREATION|
+                   FILE_NOTIFY_CHANGE_LAST_ACCESS|
+                   FILE_NOTIFY_CHANGE_LAST_WRITE|
+                   FILE_NOTIFY_CHANGE_SIZE|
+                   FILE_NOTIFY_CHANGE_ATTRIBUTES|
+                   FILE_NOTIFY_CHANGE_DIR_NAME|
+                   FILE_NOTIFY_CHANGE_FILE_NAME, /* filter conditions */
+                   &BytesReturned, /* bytes returned */
+                   NULL, /* overlapped buffer */
+                   NULL)) {
+            qDebug () << "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP";
+        }
+#endif
     }
 }
 

@@ -60,6 +60,11 @@ public:
     void addIgnoreListFile( const QString& );
     void addIgnorePattern( const QString& );
 
+    /**
+     * @brief clearTimeIgnore
+     *
+     */
+    void clearTimeIngore();
 
     QStringList ignores() const;
 
@@ -84,6 +89,7 @@ signals:
 protected slots:
     // called from the implementations to indicate a change in path
     void changeDetected( const QString& path);
+    void fileChangeDetected( const QString& file );
 
 protected:
     QHash<QString, int> _pendingPathes;

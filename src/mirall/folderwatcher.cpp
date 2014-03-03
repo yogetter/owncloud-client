@@ -100,13 +100,17 @@ bool FolderWatcher::pathIsIgnored( const QString& path )
             pattern.remove(pattern.length()-1, 1); // remove the last char.
         }
         // if the pattern contains / it needs to match the entire path
-        if (pattern.contains('/') && regexp.exactMatch(path)) {
-            qDebug() << "* Discarded by ignore pattern: " << path;
-            return true;
+        if (pattern.contains('/') ) {
+            if( regexp.exactMatch(path)) {
+                qDebug() << "* Discarded by ignore pattern: " << path;
+                return true;
+            } else {
+                continue;
+            }
         }
 
         QStringList components = path.split('/');
-        foreach (const QString& comp, components) {
+        foreach (const QString& comp, components) { // FIXME reverse sequence to start with file!
             if(regexp.exactMatch(comp)) {
                 qDebug() << "* Discarded by component ignore pattern " << comp;
                 return true;
@@ -135,6 +139,33 @@ void FolderWatcher::changeDetected( const QString& path )
     emit folderChanged(path);
 }
 
+void FolderWatcher::fileChangeDetected( const QString& file )
+{
+    if( file.isEmpty() ) return;
+
+    qDebug() << Q_FUNC_INFO << file;
+
+    if( file == _lastPath && _timer.elapsed() < 1000 ) {
+        // the same path was reported within the last second. Skip.
+        qDebug() << "   > Known file";
+        return;
+    }
+    _lastPath = file;
+    _timer.restart();
+
+    // ------- handle ignores:
+    if( pathIsIgnored(file) ) {
+        qDebug() << "File is ignored: " << file;
+        return;
+    }
+
+    QString f(file);
+    int indx = file.lastIndexOf( QChar('/') );
+    f.truncate(indx+1);
+
+    emit folderChanged(f);
+}
+
 void FolderWatcher::addPath(const QString &path )
 {
     _d->addPath(path);
@@ -145,6 +176,10 @@ void FolderWatcher::removePath(const QString &path )
     _d->removePath(path);
 }
 
+void FolderWatcher::clearTimeIngore()
+{
+    _lastPath = QString();
+}
 
 } // namespace Mirall
 
