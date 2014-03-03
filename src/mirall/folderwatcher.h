@@ -58,6 +58,8 @@ public:
       * and may contain wildcards
       */
     void addIgnoreListFile( const QString& );
+    void addIgnorePattern( const QString& );
+
 
     QStringList ignores() const;
 

@@ -47,6 +47,15 @@ FolderWatcher::FolderWatcher(const QString &root, QObject *parent)
 FolderWatcher::~FolderWatcher()
 { }
 
+void FolderWatcher::addIgnorePattern(const QString & pattern)
+{
+    QString line( pattern );
+    if( line.startsWith("]")) {
+        line.remove(0,1); // remove the first char.
+    }
+    _ignores.append(line);
+}
+
 void FolderWatcher::addIgnoreListFile( const QString& file )
 {
     if( file.isEmpty() ) return;
@@ -58,7 +67,7 @@ void FolderWatcher::addIgnoreListFile( const QString& file )
     while (!infile.atEnd()) {
         QString line = QString::fromLocal8Bit( infile.readLine() ).trimmed();
         if( !(line.startsWith( QLatin1Char('#') ) || line.isEmpty()) ) {
-            _ignores.append(line);
+            addIgnorePattern( line );
         }
     }
 }
