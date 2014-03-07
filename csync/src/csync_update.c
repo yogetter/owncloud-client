@@ -423,20 +423,23 @@ int csync_walker(CSYNC *ctx, const char *file, const csync_vio_file_stat_t *fs,
   return rc;
 }
 
-static void fill_tree_from_db(CSYNC *ctx, const char *uri)
+static bool fill_tree_from_db(CSYNC *ctx, const char *uri)
 {
     const char *path = NULL;
 
     if( strlen(uri) < strlen(ctx->remote.uri)+1) {
         CSYNC_LOG(CSYNC_LOG_PRIORITY_ERROR, "name does not contain remote uri!");
-        return;
+        return false;
     }
 
     path = uri + strlen(ctx->remote.uri)+1;
 
     if( csync_statedb_get_below_path(ctx, path) < 0 ) {
         CSYNC_LOG(CSYNC_LOG_PRIORITY_ERROR, "StateDB could not be read!");
+        return false;
     }
+
+    return true;
 }
 
 /* File tree walker */
@@ -466,7 +469,11 @@ int csync_ftw(CSYNC *ctx, const char *uri, csync_walker_fn fn,
   // if the etag of this dir is still the same, its content is restored from the
   // database.
   if( do_read_from_db ) {
-      fill_tree_from_db(ctx, uri);
+      if( ! fill_tree_from_db(ctx, uri) ) {
+        errno = ENOENT;
+        ctx->status_code = CSYNC_STATUS_OPENDIR_ERROR;
+        goto error;
+      }
       goto done;
   }
 

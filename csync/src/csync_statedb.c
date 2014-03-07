@@ -352,7 +352,10 @@ static int _csync_file_stat_from_metadata_table( csync_file_stat_t **st, sqlite3
     int column_count;
     int len;
 
-    if( ! stmt ) return -1;
+    if( ! stmt ) {
+       CSYNC_LOG(CSYNC_LOG_PRIORITY_ERROR, "Fatal: Statement is NULL.");
+       return SQLITE_ERROR;
+    }
 
     column_count = sqlite3_column_count(stmt);
 
@@ -366,7 +369,7 @@ static int _csync_file_stat_from_metadata_table( csync_file_stat_t **st, sqlite3
             len = sqlite3_column_int(stmt, 1);
             *st = c_malloc(sizeof(csync_file_stat_t) + len + 1);
             if (*st == NULL) {
-                return -1;
+                return SQLITE_NOMEM;
             }
             /* clear the whole structure */
             ZERO_STRUCTP(*st);
