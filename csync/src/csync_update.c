@@ -589,7 +589,8 @@ int csync_ftw(CSYNC *ctx, const char *uri, csync_walker_fn fn,
         char *etag = NULL;
         int len = strlen( path );
         uint64_t h = c_jhash64((uint8_t *) path, len, 0);
-        etag = csync_statedb_get_uniqId( ctx, h, fs );
+        etag = csync_statedb_get_uniqId( ctx, h, fs ); // FIXME: Use precompiled sql statement
+
         if( etag ) {
             SAFE_FREE(fs->etag);
             fs->etag = etag;
