@@ -48,9 +48,11 @@
 #include "csync_rename.h"
 
 #define BUF_SIZE 16
-#define HASH_QUERY "SELECT * FROM metadata WHERE phash=?1"
 
 static sqlite3_stmt* _by_hash_stmt = NULL;
+static sqlite3_stmt* _by_fileid_stmt = NULL;
+static sqlite3_stmt* _by_inode_stmt = NULL;
+
 
 void csync_set_statedb_exists(CSYNC *ctx, int val) {
   ctx->statedb.exists = val;
@@ -285,8 +287,20 @@ int csync_statedb_close(const char *statedb, sqlite3 *db, int jwritten) {
   mbchar_t *mb_statedb = NULL;
 
   /* deallocate query resources */
-  rc = sqlite3_finalize(_by_hash_stmt);
-  _by_hash_stmt = NULL;
+  if( _by_hash_stmt ) {
+      rc = sqlite3_finalize(_by_hash_stmt);
+      _by_hash_stmt = NULL;
+  }
+
+  if( _by_fileid_stmt ) {
+      rc = sqlite3_finalize(_by_fileid_stmt);
+      _by_fileid_stmt = NULL;
+  }
+
+  if( _by_inode_stmt ) {
+      rc = sqlite3_finalize(_by_inode_stmt);
+      _by_inode_stmt = NULL;
+  }
 
   /* close the temporary database */
   sqlite3_close(db);
@@ -409,11 +423,13 @@ csync_file_stat_t *csync_statedb_get_stat_by_hash(sqlite3 *db,
   int rc;
 
   if( _by_hash_stmt == NULL ) {
-    rc = sqlite3_prepare_v2(db, HASH_QUERY, strlen(HASH_QUERY), &_by_hash_stmt, NULL);
-    if( rc != SQLITE_OK ) {
-      CSYNC_LOG(CSYNC_LOG_PRIORITY_ERROR, "WRN: Unable to create stmt for hash query.");
-      return NULL;
-    }
+      const char *hash_query = "SELECT * FROM metadata WHERE phash=?1";
+
+      rc = sqlite3_prepare_v2(db, hash_query, strlen(hash_query), &_by_hash_stmt, NULL);
+      if( rc != SQLITE_OK ) {
+          CSYNC_LOG(CSYNC_LOG_PRIORITY_ERROR, "WRN: Unable to create stmt for hash query.");
+          return NULL;
+      }
   }
 
   if( _by_hash_stmt == NULL ) {
@@ -431,119 +447,70 @@ csync_file_stat_t *csync_statedb_get_stat_by_hash(sqlite3 *db,
 }
 
 csync_file_stat_t *csync_statedb_get_stat_by_file_id( sqlite3 *db,
-                                                     const char *file_id ) {
-   csync_file_stat_t *st = NULL;
-   c_strlist_t *result = NULL;
-   char *stmt = NULL;
-   size_t len = 0;
+                                                      const char *file_id ) {
+    csync_file_stat_t *st = NULL;
+    int rc = 0;
 
-   if (!file_id) {
-       return 0;
-   }
-   if (c_streq(file_id, "")) {
-       return 0;
-   }
-   stmt = sqlite3_mprintf("SELECT * FROM metadata WHERE fileid='%q'",
-                          file_id);
+    if (!file_id) {
+        return 0;
+    }
+    if (c_streq(file_id, "")) {
+        return 0;
+    }
 
-   if (stmt == NULL) {
-     return NULL;
-   }
+    if( _by_fileid_stmt == NULL ) {
+        const char *query = "SELECT * FROM metadata WHERE fileid='?1'";
 
-   result = csync_statedb_query(db, stmt);
-   sqlite3_free(stmt);
-   if (result == NULL) {
-     return NULL;
-   }
+        rc = sqlite3_prepare_v2(db, query, strlen(query), &_by_fileid_stmt, NULL);
+        if( rc != SQLITE_OK ) {
+            CSYNC_LOG(CSYNC_LOG_PRIORITY_ERROR, "WRN: Unable to create stmt for file id query.");
+            return NULL;
+        }
+    }
 
-   if (result->count <= 6) {
-     c_strlist_destroy(result);
-     return NULL;
-   }
+    /* bind the query value */
+    sqlite3_bind_text(_by_fileid_stmt, 1, file_id, -1, SQLITE_STATIC);
 
-   /* phash, pathlen, path, inode, uid, gid, mode, modtime */
-   len = strlen(result->vector[2]);
-   st = c_malloc(sizeof(csync_file_stat_t) + len + 1);
-   if (st == NULL) {
-     c_strlist_destroy(result);
-     return NULL;
-   }
-   /* clear the whole structure */
-   ZERO_STRUCTP(st);
+    if( _csync_file_stat_from_metadata_table(&st, _by_fileid_stmt) < 0 ) {
+        CSYNC_LOG(CSYNC_LOG_PRIORITY_ERROR, "WRN: Could not get line from metadata!");
+    }
+    // clear the resources used by the statement.
+    sqlite3_reset(_by_fileid_stmt);
 
-   st->phash    = atoll(result->vector[0]);
-   st->pathlen  = atoi(result->vector[1]);
-   memcpy(st->path, (len ? result->vector[2] : ""), len + 1);
-   st->inode    = atoll(result->vector[3]);
-   st->uid      = atoi(result->vector[4]);
-   st->gid      = atoi(result->vector[5]);
-   st->mode     = atoi(result->vector[6]);
-   st->modtime  = strtoul(result->vector[7], NULL, 10);
-   st->type     = atoi(result->vector[8]);
-   if( result->vector[9] )
-     st->etag = c_strdup(result->vector[9]);
-
-   csync_vio_set_file_id(st->file_id, file_id);
-
-   c_strlist_destroy(result);
-
-   return st;
- }
-
+    return st;
+}
 
 /* caller must free the memory */
 csync_file_stat_t *csync_statedb_get_stat_by_inode(sqlite3 *db,
-                                                   uint64_t inode) {
+                                                  uint64_t inode)
+{
   csync_file_stat_t *st = NULL;
-  c_strlist_t *result = NULL;
-  char *stmt = NULL;
-  size_t len = 0;
+  int rc;
 
   if (!inode) {
       return NULL;
   }
 
-  stmt = sqlite3_mprintf("SELECT * FROM metadata WHERE inode='%lld'",
-             (long long signed int) inode);
-  if (stmt == NULL) {
+  if( _by_inode_stmt == NULL ) {
+      const char *inode_query = "SELECT * FROM metadata WHERE inode=?1";
+
+      rc = sqlite3_prepare_v2(db, inode_query, strlen(inode_query), &_by_inode_stmt, NULL);
+      if( rc != SQLITE_OK ) {
+          CSYNC_LOG(CSYNC_LOG_PRIORITY_ERROR, "WRN: Unable to create stmt for inode query.");
+          return NULL;
+      }
+  }
+
+  if( _by_inode_stmt == NULL ) {
     return NULL;
   }
 
-  result = csync_statedb_query(db, stmt);
-  sqlite3_free(stmt);
-  if (result == NULL) {
-    return NULL;
+  sqlite3_bind_int64(_by_inode_stmt, 1, (long long signed int)inode);
+
+  if( _csync_file_stat_from_metadata_table(&st, _by_inode_stmt) < 0 ) {
+      CSYNC_LOG(CSYNC_LOG_PRIORITY_ERROR, "WRN: Could not get line from metadata by inode!");
   }
-
-  if (result->count <= 6) {
-    c_strlist_destroy(result);
-    return NULL;
-  }
-
-  /* phash, pathlen, path, inode, uid, gid, mode, modtime */
-  len = strlen(result->vector[2]);
-  st = c_malloc(sizeof(csync_file_stat_t) + len + 1);
-  if (st == NULL) {
-    c_strlist_destroy(result);
-    return NULL;
-  }
-  /* clear the whole structure */
-  ZERO_STRUCTP(st);
-
-  st->phash = atoll(result->vector[0]);
-  st->pathlen = atoi(result->vector[1]);
-  memcpy(st->path, (len ? result->vector[2] : ""), len + 1);
-  st->inode = atoll(result->vector[3]);
-  st->uid = atoi(result->vector[4]);
-  st->gid = atoi(result->vector[5]);
-  st->mode = atoi(result->vector[6]);
-  st->modtime = strtoul(result->vector[7], NULL, 10);
-  st->type = atoi(result->vector[8]);
-  if( result->vector[9] )
-    st->etag = c_strdup(result->vector[9]);
-  csync_vio_set_file_id( st->file_id, result->vector[10]);
-
-  c_strlist_destroy(result);
+  sqlite3_reset(_by_inode_stmt);
 
   return st;
 }
