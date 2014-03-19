@@ -595,12 +595,14 @@ int csync_ftw(CSYNC *ctx, const char *uri, csync_walker_fn fn,
             SAFE_FREE(fs->etag);
             fs->etag = etag;
             fs->fields |= CSYNC_VIO_FILE_STAT_FIELDS_ETAG;
+
+            if( c_streq(etag, "")) {
+                CSYNC_LOG(CSYNC_LOG_PRIORITY_DEBUG, "Uniq ID from Database is EMPTY: %s", path);
+            } else {
+                CSYNC_LOG(CSYNC_LOG_PRIORITY_DEBUG, "Uniq ID from Database: %s -> %s", path, fs->etag ? fs->etag : "<NULL>" );
+            }
         }
-        if( c_streq(etag, "")) {
-          CSYNC_LOG(CSYNC_LOG_PRIORITY_DEBUG, "Uniq ID from Database is EMPTY: %s", path);
-        } else {
-          CSYNC_LOG(CSYNC_LOG_PRIORITY_DEBUG, "Uniq ID from Database: %s -> %s", path, fs->etag ? fs->etag : "<NULL>" );
-        }
+
     }
 
     previous_fs = ctx->current_fs;
