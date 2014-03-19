@@ -515,30 +515,20 @@ csync_file_stat_t *csync_statedb_get_stat_by_inode(sqlite3 *db,
   return st;
 }
 
-/* Get the etag.  (it is called unique id for legacy reason
- * and it is the field md5 in the database for legacy reason */
-char *csync_statedb_get_uniqId( CSYNC *ctx, uint64_t jHash, csync_vio_file_stat_t *buf ) {
+/* Get the etag. */
+char *csync_statedb_get_etag( CSYNC *ctx, uint64_t jHash ) {
     char *ret = NULL;
-    c_strlist_t *result = NULL;
-    char *stmt = NULL;
-    (void)buf;
+    csync_file_stat_t *fs = NULL;
 
     if( ! csync_get_statedb_exists(ctx)) return ret;
 
-    stmt = sqlite3_mprintf("SELECT md5, fileid FROM metadata WHERE phash='%lld'", jHash);
-
-    result = csync_statedb_query(ctx->statedb.db, stmt);
-    sqlite3_free(stmt);
-    if (result == NULL) {
-      return NULL;
+    fs = csync_statedb_get_stat_by_hash(ctx, jHash );
+    if( fs ) {
+        if( fs->etag ) {
+            ret = c_strdup(fs->etag);
+        }
+        csync_file_stat_free(fs);
     }
-
-    if (result->count == 2) {
-        ret = c_strdup( result->vector[0] );
-        csync_vio_file_stat_set_file_id(buf, result->vector[1]);
-    }
-
-    c_strlist_destroy(result);
 
     return ret;
 }
