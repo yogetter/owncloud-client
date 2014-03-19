@@ -170,7 +170,7 @@ static int _csync_detect_update(CSYNC *ctx, const char *file,
     }
 
     if (fs->mtime == 0) {
-      tmp = csync_statedb_get_stat_by_hash(ctx->statedb.db, h);
+      tmp = csync_statedb_get_stat_by_hash(ctx, h);
       CSYNC_LOG(CSYNC_LOG_PRIORITY_TRACE, "file: %s - mtime is zero!", path);
       if (tmp == NULL) {
         CSYNC_LOG(CSYNC_LOG_PRIORITY_TRACE, "file: %s - not found in db, IGNORE!", path);
@@ -206,7 +206,7 @@ static int _csync_detect_update(CSYNC *ctx, const char *file,
    * does not change on rename.
    */
   if (csync_get_statedb_exists(ctx)) {
-    tmp = csync_statedb_get_stat_by_hash(ctx->statedb.db, h);
+    tmp = csync_statedb_get_stat_by_hash(ctx, h);
 
     if(tmp && tmp->phash == h ) { /* there is an entry in the database */
         /* we have an update! */
@@ -249,7 +249,7 @@ static int _csync_detect_update(CSYNC *ctx, const char *file,
 
         /* check if it's a file and has been renamed */
         if (ctx->current == LOCAL_REPLICA) {
-            tmp = csync_statedb_get_stat_by_inode(ctx->statedb.db, fs->inode);
+            tmp = csync_statedb_get_stat_by_inode(ctx, fs->inode);
 
             /* translate the file type between the two stat types csync has. */
             if( tmp && tmp->type == 0 ) {
@@ -276,7 +276,7 @@ static int _csync_detect_update(CSYNC *ctx, const char *file,
             }
         } else {
             /* Remote Replica Rename check */
-            tmp = csync_statedb_get_stat_by_file_id(ctx->statedb.db, fs->file_id);
+            tmp = csync_statedb_get_stat_by_file_id(ctx, fs->file_id);
             if(tmp ) {                           /* tmp existing at all */
                 if ((tmp->type == CSYNC_FTW_TYPE_DIR && fs->type != CSYNC_VIO_FILE_TYPE_DIRECTORY) ||
                         (tmp->type == CSYNC_FTW_TYPE_FILE && fs->type != CSYNC_VIO_FILE_TYPE_REGULAR)) {
@@ -397,7 +397,7 @@ int csync_walker(CSYNC *ctx, const char *file, const csync_vio_file_stat_t *fs,
     if( h == 0 ) {
       return 0;
     }
-    st = csync_statedb_get_stat_by_hash(ctx->statedb.db, h);
+    st = csync_statedb_get_stat_by_hash(ctx, h);
     if( !st ) {
       return 0;
     }
@@ -589,7 +589,7 @@ int csync_ftw(CSYNC *ctx, const char *uri, csync_walker_fn fn,
         char *etag = NULL;
         int len = strlen( path );
         uint64_t h = c_jhash64((uint8_t *) path, len, 0);
-        etag = csync_statedb_get_uniqId( ctx, h, fs ); // FIXME: Use precompiled sql statement
+        etag = csync_statedb_get_etag( ctx, h );
 
         if( etag ) {
             SAFE_FREE(fs->etag);

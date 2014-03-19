@@ -416,7 +416,7 @@ static int _csync_file_stat_from_metadata_table( csync_file_stat_t **st, sqlite3
 }
 
 /* caller must free the memory */
-csync_file_stat_t *csync_statedb_get_stat_by_hash(sqlite3 *db,
+csync_file_stat_t *csync_statedb_get_stat_by_hash(CSYNC *ctx,
                                                   uint64_t phash)
 {
   csync_file_stat_t *st = NULL;
@@ -425,7 +425,7 @@ csync_file_stat_t *csync_statedb_get_stat_by_hash(sqlite3 *db,
   if( _by_hash_stmt == NULL ) {
       const char *hash_query = "SELECT * FROM metadata WHERE phash=?1";
 
-      rc = sqlite3_prepare_v2(db, hash_query, strlen(hash_query), &_by_hash_stmt, NULL);
+      rc = sqlite3_prepare_v2(ctx->statedb.db, hash_query, strlen(hash_query), &_by_hash_stmt, NULL);
       if( rc != SQLITE_OK ) {
           CSYNC_LOG(CSYNC_LOG_PRIORITY_ERROR, "WRN: Unable to create stmt for hash query.");
           return NULL;
@@ -446,7 +446,7 @@ csync_file_stat_t *csync_statedb_get_stat_by_hash(sqlite3 *db,
   return st;
 }
 
-csync_file_stat_t *csync_statedb_get_stat_by_file_id( sqlite3 *db,
+csync_file_stat_t *csync_statedb_get_stat_by_file_id(CSYNC *ctx,
                                                       const char *file_id ) {
     csync_file_stat_t *st = NULL;
     int rc = 0;
@@ -461,7 +461,7 @@ csync_file_stat_t *csync_statedb_get_stat_by_file_id( sqlite3 *db,
     if( _by_fileid_stmt == NULL ) {
         const char *query = "SELECT * FROM metadata WHERE fileid='?1'";
 
-        rc = sqlite3_prepare_v2(db, query, strlen(query), &_by_fileid_stmt, NULL);
+        rc = sqlite3_prepare_v2(ctx->statedb.db, query, strlen(query), &_by_fileid_stmt, NULL);
         if( rc != SQLITE_OK ) {
             CSYNC_LOG(CSYNC_LOG_PRIORITY_ERROR, "WRN: Unable to create stmt for file id query.");
             return NULL;
@@ -481,7 +481,7 @@ csync_file_stat_t *csync_statedb_get_stat_by_file_id( sqlite3 *db,
 }
 
 /* caller must free the memory */
-csync_file_stat_t *csync_statedb_get_stat_by_inode(sqlite3 *db,
+csync_file_stat_t *csync_statedb_get_stat_by_inode(CSYNC *ctx,
                                                   uint64_t inode)
 {
   csync_file_stat_t *st = NULL;
@@ -494,7 +494,7 @@ csync_file_stat_t *csync_statedb_get_stat_by_inode(sqlite3 *db,
   if( _by_inode_stmt == NULL ) {
       const char *inode_query = "SELECT * FROM metadata WHERE inode=?1";
 
-      rc = sqlite3_prepare_v2(db, inode_query, strlen(inode_query), &_by_inode_stmt, NULL);
+      rc = sqlite3_prepare_v2(ctx->statedb.db, inode_query, strlen(inode_query), &_by_inode_stmt, NULL);
       if( rc != SQLITE_OK ) {
           CSYNC_LOG(CSYNC_LOG_PRIORITY_ERROR, "WRN: Unable to create stmt for inode query.");
           return NULL;
