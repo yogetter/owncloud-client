@@ -54,7 +54,7 @@ int csync_get_statedb_exists(CSYNC *ctx);
  */
 int csync_statedb_load(CSYNC *ctx, const char *statedb, sqlite3 **pdb);
 
-int csync_statedb_close(const char *statedb, sqlite3 *db, int jwritten);
+int csync_statedb_close(CSYNC *ctx, int jwritten);
 
 csync_file_stat_t *csync_statedb_get_stat_by_hash(CSYNC *ctx, uint64_t phash);
 

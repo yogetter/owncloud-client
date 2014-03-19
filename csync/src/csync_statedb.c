@@ -49,11 +49,6 @@
 
 #define BUF_SIZE 16
 
-static sqlite3_stmt* _by_hash_stmt = NULL;
-static sqlite3_stmt* _by_fileid_stmt = NULL;
-static sqlite3_stmt* _by_inode_stmt = NULL;
-
-
 void csync_set_statedb_exists(CSYNC *ctx, int val) {
   ctx->statedb.exists = val;
 }
@@ -209,6 +204,10 @@ int csync_statedb_load(CSYNC *ctx, const char *statedb, sqlite3 **pdb) {
   char *statedb_tmp = NULL;
   sqlite3 *db = NULL;
 
+  if( !ctx ) {
+      return -1;
+  }
+
   /* csync_statedb_check tries to open the statedb and creates it in case
    * its not there.
    */
@@ -279,33 +278,36 @@ out:
   return rc;
 }
 
-int csync_statedb_close(const char *statedb, sqlite3 *db, int jwritten) {
+int csync_statedb_close(CSYNC *ctx, int jwritten) {
   char *statedb_tmp = NULL;
   mbchar_t* wstatedb_tmp = NULL;
   int rc = 0;
-
   mbchar_t *mb_statedb = NULL;
 
+  if (!ctx) {
+      return -1;
+  }
+
   /* deallocate query resources */
-  if( _by_hash_stmt ) {
-      rc = sqlite3_finalize(_by_hash_stmt);
-      _by_hash_stmt = NULL;
+  if( ctx->statedb.by_hash_stmt ) {
+      rc = sqlite3_finalize(ctx->statedb.by_hash_stmt);
+      ctx->statedb.by_hash_stmt = NULL;
   }
 
-  if( _by_fileid_stmt ) {
-      rc = sqlite3_finalize(_by_fileid_stmt);
-      _by_fileid_stmt = NULL;
+  if( ctx->statedb.by_fileid_stmt ) {
+      rc = sqlite3_finalize(ctx->statedb.by_fileid_stmt);
+      ctx->statedb.by_fileid_stmt = NULL;
   }
 
-  if( _by_inode_stmt ) {
-      rc = sqlite3_finalize(_by_inode_stmt);
-      _by_inode_stmt = NULL;
+  if( ctx->statedb.by_inode_stmt ) {
+      rc = sqlite3_finalize(ctx->statedb.by_inode_stmt);
+      ctx->statedb.by_inode_stmt = NULL;
   }
 
   /* close the temporary database */
-  sqlite3_close(db);
+  sqlite3_close(ctx->statedb.db);
 
-  if (asprintf(&statedb_tmp, "%s.ctmp", statedb) < 0) {
+  if (asprintf(&statedb_tmp, "%s.ctmp", ctx->statedb.file) < 0) {
     return -1;
   }
 
@@ -323,10 +325,10 @@ int csync_statedb_close(const char *statedb, sqlite3 *db, int jwritten) {
        */
       if (_csync_statedb_check(statedb_tmp) >= 0) {
           /* New statedb is valid. */
-          mb_statedb = c_utf8_to_locale(statedb);
+          mb_statedb = c_utf8_to_locale(ctx->statedb.file);
 
           /* Move the tmp-db to the real one. */
-          if (c_rename(statedb_tmp, statedb) < 0) {
+          if (c_rename(statedb_tmp, ctx->statedb.file) < 0) {
               CSYNC_LOG(CSYNC_LOG_PRIORITY_DEBUG,
                         "Renaming tmp db to original db failed. (errno=%d)", errno);
               rc = -1;
@@ -422,26 +424,30 @@ csync_file_stat_t *csync_statedb_get_stat_by_hash(CSYNC *ctx,
   csync_file_stat_t *st = NULL;
   int rc;
 
-  if( _by_hash_stmt == NULL ) {
+  if( !ctx ) {
+      return NULL;
+  }
+
+  if( ctx->statedb.by_hash_stmt == NULL ) {
       const char *hash_query = "SELECT * FROM metadata WHERE phash=?1";
 
-      rc = sqlite3_prepare_v2(ctx->statedb.db, hash_query, strlen(hash_query), &_by_hash_stmt, NULL);
+      rc = sqlite3_prepare_v2(ctx->statedb.db, hash_query, strlen(hash_query), &ctx->statedb.by_hash_stmt, NULL);
       if( rc != SQLITE_OK ) {
           CSYNC_LOG(CSYNC_LOG_PRIORITY_ERROR, "WRN: Unable to create stmt for hash query.");
           return NULL;
       }
   }
 
-  if( _by_hash_stmt == NULL ) {
+  if( ctx->statedb.by_hash_stmt == NULL ) {
     return NULL;
   }
 
-  sqlite3_bind_int64(_by_hash_stmt, 1, (long long signed int)phash);
+  sqlite3_bind_int64(ctx->statedb.by_hash_stmt, 1, (long long signed int)phash);
 
-  if( _csync_file_stat_from_metadata_table(&st, _by_hash_stmt) < 0 ) {
+  if( _csync_file_stat_from_metadata_table(&st, ctx->statedb.by_hash_stmt) < 0 ) {
       CSYNC_LOG(CSYNC_LOG_PRIORITY_ERROR, "WRN: Could not get line from metadata!");
   }
-  sqlite3_reset(_by_hash_stmt);
+  sqlite3_reset(ctx->statedb.by_hash_stmt);
 
   return st;
 }
@@ -458,10 +464,14 @@ csync_file_stat_t *csync_statedb_get_stat_by_file_id(CSYNC *ctx,
         return 0;
     }
 
-    if( _by_fileid_stmt == NULL ) {
+    if( !ctx ) {
+        return NULL;
+    }
+
+    if( ctx->statedb.by_fileid_stmt == NULL ) {
         const char *query = "SELECT * FROM metadata WHERE fileid='?1'";
 
-        rc = sqlite3_prepare_v2(ctx->statedb.db, query, strlen(query), &_by_fileid_stmt, NULL);
+        rc = sqlite3_prepare_v2(ctx->statedb.db, query, strlen(query), &ctx->statedb.by_fileid_stmt, NULL);
         if( rc != SQLITE_OK ) {
             CSYNC_LOG(CSYNC_LOG_PRIORITY_ERROR, "WRN: Unable to create stmt for file id query.");
             return NULL;
@@ -469,13 +479,13 @@ csync_file_stat_t *csync_statedb_get_stat_by_file_id(CSYNC *ctx,
     }
 
     /* bind the query value */
-    sqlite3_bind_text(_by_fileid_stmt, 1, file_id, -1, SQLITE_STATIC);
+    sqlite3_bind_text(ctx->statedb.by_fileid_stmt, 1, file_id, -1, SQLITE_STATIC);
 
-    if( _csync_file_stat_from_metadata_table(&st, _by_fileid_stmt) < 0 ) {
+    if( _csync_file_stat_from_metadata_table(&st, ctx->statedb.by_fileid_stmt) < 0 ) {
         CSYNC_LOG(CSYNC_LOG_PRIORITY_ERROR, "WRN: Could not get line from metadata!");
     }
     // clear the resources used by the statement.
-    sqlite3_reset(_by_fileid_stmt);
+    sqlite3_reset(ctx->statedb.by_fileid_stmt);
 
     return st;
 }
@@ -491,26 +501,30 @@ csync_file_stat_t *csync_statedb_get_stat_by_inode(CSYNC *ctx,
       return NULL;
   }
 
-  if( _by_inode_stmt == NULL ) {
+  if( !ctx ) {
+      return NULL;
+  }
+
+  if( ctx->statedb.by_inode_stmt == NULL ) {
       const char *inode_query = "SELECT * FROM metadata WHERE inode=?1";
 
-      rc = sqlite3_prepare_v2(ctx->statedb.db, inode_query, strlen(inode_query), &_by_inode_stmt, NULL);
+      rc = sqlite3_prepare_v2(ctx->statedb.db, inode_query, strlen(inode_query), &ctx->statedb.by_inode_stmt, NULL);
       if( rc != SQLITE_OK ) {
           CSYNC_LOG(CSYNC_LOG_PRIORITY_ERROR, "WRN: Unable to create stmt for inode query.");
           return NULL;
       }
   }
 
-  if( _by_inode_stmt == NULL ) {
+  if( ctx->statedb.by_inode_stmt == NULL ) {
     return NULL;
   }
 
-  sqlite3_bind_int64(_by_inode_stmt, 1, (long long signed int)inode);
+  sqlite3_bind_int64(ctx->statedb.by_inode_stmt, 1, (long long signed int)inode);
 
-  if( _csync_file_stat_from_metadata_table(&st, _by_inode_stmt) < 0 ) {
+  if( _csync_file_stat_from_metadata_table(&st, ctx->statedb.by_inode_stmt) < 0 ) {
       CSYNC_LOG(CSYNC_LOG_PRIORITY_ERROR, "WRN: Could not get line from metadata by inode!");
   }
-  sqlite3_reset(_by_inode_stmt);
+  sqlite3_reset(ctx->statedb.by_inode_stmt);
 
   return st;
 }
@@ -519,6 +533,10 @@ csync_file_stat_t *csync_statedb_get_stat_by_inode(CSYNC *ctx,
 char *csync_statedb_get_etag( CSYNC *ctx, uint64_t jHash ) {
     char *ret = NULL;
     csync_file_stat_t *fs = NULL;
+
+    if( !ctx ) {
+        return NULL;
+    }
 
     if( ! csync_get_statedb_exists(ctx)) return ret;
 
@@ -543,6 +561,10 @@ int csync_statedb_get_below_path( CSYNC *ctx, const char *path ) {
     int asp;
 
     if( !path ) {
+        return -1;
+    }
+
+    if( !ctx ) {
         return -1;
     }
 
