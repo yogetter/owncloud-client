@@ -52,8 +52,10 @@ SyncEngine::SyncEngine(CSYNC *ctx, const QString& localPath, const QString& remo
   , _remoteUrl(remoteURL)
   , _remotePath(remotePath)
   , _journal(journal)
+
   , _hasNoneFiles(false)
   , _hasRemoveFile(false)
+
   , _uploadLimit(0)
   , _downloadLimit(0)
 {
