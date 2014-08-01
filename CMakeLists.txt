@@ -1,5 +1,7 @@
 
 cmake_minimum_required(VERSION 2.6)
+cmake_policy(VERSION 3.0.0)
+
 project(mirall)
 set(PACKAGE "mirall")
 set( CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules )
