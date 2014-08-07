@@ -13,7 +13,7 @@ owncloudcmd is the command line tool used for the ownCloud file synchronization
 desktop utility.  This command line tool is based on mirall.
 
 Contrary to the :manpage:`owncloud(1)` GUI client, `owncloudcmd` only performs
-a single sync run and then exits. In so doing, `owncloudcmd` replaces the
+a single sync run and then exits. In doing so, `owncloudcmd` replaces the
 `ocsync` binary used for the same purpose in earlier releases.
 
 A *sync run* synchronizes a single local directory using a WebDAV share on a
