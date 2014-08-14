@@ -13,7 +13,7 @@
  * for more details.
  */
 #include <QtGlobal>
-
+#include <QSet>
 #include <signal.h>
 
 #ifdef Q_OS_UNIX
@@ -42,6 +42,17 @@ void warnSystray()
                                           "Otherwise, please install a system tray application such as 'trayer' and try again.")
                           .arg(Theme::instance()->appNameGUI()));
 }
+
+QSet<QObject*> mObjects;
+extern "C" Q_DECL_EXPORT void qt_addObject(QObject *obj)
+{
+    mObjects.insert(obj);
+}
+extern "C" Q_DECL_EXPORT void qt_removeObject(QObject *obj)
+{
+    mObjects.remove(obj);
+}
+
 
 int main(int argc, char **argv)
 {
@@ -103,6 +114,26 @@ int main(int argc, char **argv)
             break;
         }
     }
-    return app.exec();
+    int re = app.exec();
+
+    qDebug() << "================> FINALIZE: " << mObjects.count();
+    QMap<QString, int> objCount;
+    foreach( QObject *obj, mObjects ) {
+        QString name = obj->metaObject()->className();
+        qDebug() << "Objects: " << name;
+        if( objCount.contains(name)) {
+            objCount[name] = objCount[name]+1;
+        } else {
+            objCount[name] = 1;
+        }
+    }
+
+    QMapIterator<QString, int> i(objCount);
+     while (i.hasNext()) {
+         i.next();
+         qDebug() << "  " << i.key() << ": " << i.value();
+     }
+
+    return re;
 }
 
