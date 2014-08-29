@@ -149,16 +149,16 @@ bool FileSystem::renameReplace(const QString& originFileName, const QString& des
 bool FileSystem::setExtendedFileAttribute(const QString &path, const QByteArray &name, const QByteArray& attr)
 {
 #ifndef Q_OS_WIN
+    QByteArray name2 = "user." + name;
     if (attr.isNull()) {
-        int ret = removexattr(path.toLocal8Bit().constData(), name.constData());
-        if (ret) { qWarning() << "removexattr(" << path << ", " << name << ") failed. " << errno; }
+        int ret = removexattr(path.toLocal8Bit().constData(), name2.constData());
+        if (ret) { qWarning() << "removexattr(" << path << ", " << name2 << ") failed. " << errno; }
         return ret == 0;
     } else {
-        int ret = setxattr(path.toLocal8Bit().constData(), name.constData(),
+        int ret = setxattr(path.toLocal8Bit().constData(), name2.constData(),
                            attr.constData(), attr.size(), 0);
-        if (ret) { qWarning() << "setxattr(" << path << ", " << name << ", " << attr << ") failed. " << errno; }
+        if (ret) { qWarning() << "setxattr(" << path << ", " << name2 << ", " << attr << ") failed. " << errno; }
         return ret == 0;
-        ENOTSUP;
     }
 #else
 #warning implement

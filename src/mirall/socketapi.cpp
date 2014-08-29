@@ -298,15 +298,9 @@ void SocketApi::slotRegisterPath( const QString& alias )
 {
     Folder *f = FolderMan::instance()->folder(alias);
     if (f) {
-        // Note, the file name ".owncloud-socketapi" is ignored in csync_exclude.c
-        QFile file(f->path() +  QLatin1String("/.owncloud-socketapi"));
-        if (!file.open(QIODevice::WriteOnly)) {
-            qWarning() << "SocketAPI: unable to write " << file.fileName();
-        } else {
-            FileSystem::setFileHidden(file.fileName(), true);
-            file.write(MIRALL_VERSION_STRING ":" MIRALL_SOCKET_API_VERSION ":" + _cookie
-                + ':' + QByteArray::number(_localServer->serverPort()) + ':');
-        }
+        FileSystem::setExtendedFileAttribute(f->path(), "owncloud.socketapi",
+                MIRALL_VERSION_STRING ":" MIRALL_SOCKET_API_VERSION ":" + _cookie + ':'
+                    + QByteArray::number(_localServer->serverPort()) + ':');
         broadcastMessage(QLatin1String("REGISTER_PATH"), f->path() );
     }
 }
@@ -315,7 +309,7 @@ void SocketApi::slotUnregisterPath( const QString& alias )
 {
     Folder *f = FolderMan::instance()->folder(alias);
     if (f) {
-        QFile::remove(f->path() +  QLatin1String("/.owncloud-socketapi"));
+        FileSystem::setExtendedFileAttribute(f->path(), "owncloud.socketapi", QByteArray());
         broadcastMessage(QLatin1String("UNREGISTER_PATH"), f->path(), QString::null, true );
     }
 }
