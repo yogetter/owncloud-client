@@ -25,6 +25,9 @@
 #ifdef Q_OS_WIN
 #include <windef.h>
 #include <winbase.h>
+#else
+#include <sys/types.h>
+#include <sys/xattr.h>
 #endif
 
 // We use some internals of csync:
@@ -143,6 +146,26 @@ bool FileSystem::renameReplace(const QString& originFileName, const QString& des
     return true;
 }
 
+bool FileSystem::setExtendedFileAttribute(const QString &path, const QByteArray &name, const QByteArray& attr)
+{
+#ifndef Q_OS_WIN
+    if (attr.isNull()) {
+        int ret = removexattr(path.toLocal8Bit().constData(), name.constData());
+        if (ret) { qWarning() << "removexattr(" << path << ", " << name << ") failed. " << errno; }
+        return ret == 0;
+    } else {
+        int ret = setxattr(path.toLocal8Bit().constData(), name.constData(),
+                           attr.constData(), attr.size(), 0);
+        if (ret) { qWarning() << "setxattr(" << path << ", " << name << ", " << attr << ") failed. " << errno; }
+        return ret == 0;
+        ENOTSUP;
+    }
+#else
+#warning implement
+    qWarning() << "NOT IMPLEMENTED" << Q_FUNC_INFO;
+    return false;
+#endif
+}
 
 
 }

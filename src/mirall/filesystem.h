@@ -49,4 +49,8 @@ void setModTime(const QString &filename, time_t modTime);
 bool renameReplace(const QString &originFileName, const QString &destinationFileName,
                    QString *errorString);
 
+
+/** Set a file attribute on a file */
+bool setExtendedFileAttribute(const QString &path, const QByteArray &name, const QByteArray &value);
+
 }}
