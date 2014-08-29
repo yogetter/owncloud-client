@@ -32,6 +32,7 @@
 #include <QScopedPointer>
 #include <QFile>
 #include <QDir>
+#include <quuid.h>
 #include <QApplication>
 
 // This is the version that is returned when the client asks for the VERSION.
@@ -52,10 +53,6 @@ typedef enum csync_exclude_type_e CSYNC_EXCLUDE_TYPE;
 
 CSYNC_EXCLUDE_TYPE csync_excluded_no_ctx(c_strlist_t *excludes, const char *path, int filetype);
 int csync_exclude_load(const char *fname, c_strlist_t **list);
-}
-
-namespace {
-    const int PORT = 34001;
 }
 
 namespace Mirall {
@@ -189,10 +186,14 @@ SocketApi::SocketApi(QObject* parent)
     , _localServer(new QTcpServer(this))
     , _excludes(0)
 {
-    // setup socket
-    DEBUG << "Establishing SocketAPI server at" << PORT;
-    if (!_localServer->listen(QHostAddress::LocalHost, PORT)) {
-        DEBUG << "Failed to bind to port" << PORT;
+    _cookie = QUuid::createUuid().toByteArray().toBase64();
+
+    // setup socket. first try port 34001 for legacy reason, then allow any port
+    if (!_localServer->listen(QHostAddress::LocalHost, 34001)
+            && !_localServer->listen(QHostAddress::LocalHost, 34001)) {
+        DEBUG << "Failed to bind to port";
+    } else {
+        DEBUG << "Established SocketAPI server at" << _localServer->serverPort();
     }
     connect(_localServer, SIGNAL(newConnection()), this, SLOT(slotNewConnection()));
 
@@ -297,6 +298,15 @@ void SocketApi::slotRegisterPath( const QString& alias )
 {
     Folder *f = FolderMan::instance()->folder(alias);
     if (f) {
+        // Note, the file name ".owncloud-socketapi" is ignored in csync_exclude.c
+        QFile file(f->path() +  QLatin1String("/.owncloud-socketapi"));
+        if (!file.open(QIODevice::WriteOnly)) {
+            qWarning() << "SocketAPI: unable to write " << file.fileName();
+        } else {
+            FileSystem::setFileHidden(file.fileName(), true);
+            file.write(MIRALL_VERSION_STRING ":" MIRALL_SOCKET_API_VERSION ":" + _cookie
+                + ':' + QByteArray::number(_localServer->serverPort()) + ':');
+        }
         broadcastMessage(QLatin1String("REGISTER_PATH"), f->path() );
     }
 }
@@ -305,6 +315,7 @@ void SocketApi::slotUnregisterPath( const QString& alias )
 {
     Folder *f = FolderMan::instance()->folder(alias);
     if (f) {
+        QFile::remove(f->path() +  QLatin1String("/.owncloud-socketapi"));
         broadcastMessage(QLatin1String("UNREGISTER_PATH"), f->path(), QString::null, true );
     }
 }

@@ -66,6 +66,7 @@ private:
     QTcpServer *_localServer;
     QList<QTcpSocket*> _listeners;
     c_strlist_t *_excludes;
+    QByteArray _cookie;
 };
 
 }
