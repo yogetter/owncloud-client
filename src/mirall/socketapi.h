@@ -32,6 +32,8 @@ class QStringList;
 
 namespace Mirall {
 
+class Folder;
+
 class SocketApi : public QObject
 {
 Q_OBJECT
@@ -52,6 +54,9 @@ private slots:
     void slotReadSocket();
     void slotJobCompleted(const QString &, const SyncFileItem &);
     void slotSyncItemDiscovered(const QString &, const SyncFileItem &);
+
+    /** put the extended attribute on the db file witht the port number */
+    void updateMetaData(Folder *f);
 
 private:
     void sendMessage(QTcpSocket* socket, const QString& message, bool doWait = false);

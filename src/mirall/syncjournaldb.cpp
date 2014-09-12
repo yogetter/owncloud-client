@@ -49,6 +49,13 @@ bool SyncJournalDb::exists()
     return (!_dbFile.isEmpty() && QFile::exists(_dbFile));
 }
 
+QString SyncJournalDb::fileName()
+{
+    QMutexLocker locker(&_mutex);
+    return _dbFile;
+}
+
+
 void SyncJournalDb::startTransaction()
 {
     if( _transaction == 0 ) {

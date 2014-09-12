@@ -294,13 +294,21 @@ void SocketApi::slotReadSocket()
     }
 }
 
+void SocketApi::updateMetaData(Folder* f)
+{
+    auto journal = f->journalDb();
+    if (journal->exists() ) {
+        FileSystem::setExtendedFileAttribute(journal->fileName(), "owncloud.socketapi",
+                                            MIRALL_VERSION_STRING ":" MIRALL_SOCKET_API_VERSION ":" + _cookie + ':'
+                                            + QByteArray::number(_localServer->serverPort()) + ':');
+    }
+}
+
 void SocketApi::slotRegisterPath( const QString& alias )
 {
     Folder *f = FolderMan::instance()->folder(alias);
     if (f) {
-        FileSystem::setExtendedFileAttribute(f->path(), "owncloud.socketapi",
-                MIRALL_VERSION_STRING ":" MIRALL_SOCKET_API_VERSION ":" + _cookie + ':'
-                    + QByteArray::number(_localServer->serverPort()) + ':');
+        updateMetaData(f);
         broadcastMessage(QLatin1String("REGISTER_PATH"), f->path() );
     }
 }
@@ -318,6 +326,10 @@ void SocketApi::slotUpdateFolderView(const QString& alias)
 {
     Folder *f = FolderMan::instance()->folder(alias);
     if (f) {
+
+        // In case the database was just created
+        updateMetaData(f);
+
         // do only send UPDATE_VIEW for a couple of status
         if( f->syncResult().status() == SyncResult::SyncPrepare ||
                 f->syncResult().status() == SyncResult::Success ||
