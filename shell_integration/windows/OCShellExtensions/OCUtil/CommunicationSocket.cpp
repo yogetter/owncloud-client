@@ -21,8 +21,21 @@
 #include <windows.h>
 #include <iostream>
 #include <vector>
+#include <thread>
 
 #include <fstream> 
+
+#include <atomic>
+#include <chrono>
+#include <deque>
+#include <mutex>
+#include <future>
+
+
+// shared stuff:
+std::deque<std::packaged_task<void()>> tasks;
+std::mutex tasks_mutex;
+std::atomic<bool> is_running;
 
 #define BUFSIZE 1024
 
@@ -49,6 +62,55 @@ bool CommunicationSocket::Close()
 	return closed;
 }
 
+void  CommunicationSocket::PersistantConnect()
+{
+	is_running = true;
+	auto funcConnect = []() { 
+		bool connected = connect();
+		while (!connected){
+			connected = connect();
+		}
+	};
+
+	auto funcSync = []() {
+		while (is_running) {
+				{
+					std::unique_lock<std::mutex> lock(tasks_mutex);
+					while (!tasks.empty()) {
+						auto task(std::move(tasks.front()));
+						tasks.pop_front();
+
+						lock.unlock();
+						task();
+						lock.lock();
+					}
+				}
+
+			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+		}
+	};
+	
+	std::thread fs(funcSync);
+
+	auto func = [](decltype(funcConnect) func) {
+		std::packaged_task<void()> task(func);
+		std::future<void> result = task.get_future();
+
+		{
+			std::lock_guard<std::mutex> lock(tasks_mutex);
+			tasks.push_back(std::move(task));
+		}
+
+		// wait on result
+		result.get();
+	};
+
+	auto result = std::async(std::launch::async, func);
+
+
+	is_running = false;
+	fs.join();
+}
 
 bool CommunicationSocket::Connect()
 {

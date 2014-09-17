@@ -31,6 +31,8 @@ public:
 	bool Connect();
 	bool Close();
 
+	void PersistantConnect();
+
 	bool SendMsg(const wchar_t*);
 	bool ReadLine(std::wstring*);
 

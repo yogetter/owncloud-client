@@ -20,6 +20,7 @@
 #include <iostream>
 #include <sstream>
 #include <iterator>
+#include <thread>
 
 using namespace std;
 
@@ -35,7 +36,7 @@ vector<wstring> RemotePathChecker::WatchedDirectories()
 	bool needed = false;
 
 	CommunicationSocket socket(_port);
-	socket.Connect();
+	socket.PersistantConnect();
 
 	while (socket.ReadLine(&response)) {
 		if (StringUtil::begins_with(response, wstring(L"REGISTER_PATH:"))) {
@@ -60,7 +61,7 @@ bool RemotePathChecker::IsMonitoredPath(const wchar_t* filePath, int* state)
 	bool needed = false;
 
 	CommunicationSocket socket(_port);
-	socket.Connect();
+	socket.PersistantConnect();
 	request = L"RETRIEVE_FILE_STATUS:";
 	request += filePath;
 	request += L'\n';
