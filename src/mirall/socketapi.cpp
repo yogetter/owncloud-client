@@ -530,13 +530,13 @@ SyncFileStatus SocketApi::fileStatus(Folder *folder, const QString& systemFileNa
         switch (folder->syncResult().status()) {
         case SyncResult::Undefined:
         case SyncResult::NotYetStarted:
-        case SyncResult::SyncPrepare:
         case SyncResult::SyncRunning:
             status.set(SyncFileStatus::STATUS_EVAL);
             return status;
 
         case SyncResult::Success:
         case SyncResult::Problem:
+        case SyncResult::SyncPrepare:
             status.set(SyncFileStatus::STATUS_SYNC);
             return status;
 
