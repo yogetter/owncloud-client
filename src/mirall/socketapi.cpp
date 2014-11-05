@@ -526,6 +526,7 @@ SyncFileStatus SocketApi::fileStatus(Folder *folder, const QString& systemFileNa
     if (folder->estimateState(fileName, type, &status)) {
         qDebug() << Q_FUNC_INFO << "Folder estimated status for" << fileName << "to" << status.toSocketAPIString();
     } else if (fileName == "") {
+        qDebug() << "Status of root folder:" << folder->syncResult().status();
         // sync folder itself
         switch (folder->syncResult().status()) {
         case SyncResult::Undefined:
