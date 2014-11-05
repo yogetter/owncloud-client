@@ -255,7 +255,7 @@ void SocketApi::slotUpdateFolderView(const QString& alias)
     Folder *f = FolderMan::instance()->folder(alias);
     if (f) {
         // do only send UPDATE_VIEW for a couple of status
-        if( f->syncResult().status() == SyncResult::SyncPrepare ||
+        if( /* f->syncResult().status() == SyncResult::SyncPrepare || */
                 f->syncResult().status() == SyncResult::Success ||
                 f->syncResult().status() == SyncResult::Paused  ||
                 f->syncResult().status() == SyncResult::Problem ||
