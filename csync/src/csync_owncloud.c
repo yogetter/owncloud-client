@@ -26,6 +26,9 @@
 
 #include "csync_private.h"
 
+#ifdef __APPLE__
+#include <dlfcn.h>
+#endif
 
 /*
  * helper method to build up a user text for SSL problems, called from the
@@ -420,7 +423,24 @@ static int dav_connect(csync_owncloud_ctx_t *ctx,  const char *base_url) {
         port = ne_uri_defaultport(protocol);
     }
 
+#ifdef __APPLE__
+    /* See #2627 */
+    DEBUG_WEBDAV("* ne_session=%p", ne_session_create);
+	void *l = dlopen("libneon.27.dylib", RTLD_NOLOAD);
+	DEBUG_WEBDAV("* libneon.27.dylib=%p", l);
+	ne_session* (*p)(char*, char*, int) = dlsym(l, "ne_session_create");
+	DEBUG_WEBDAV("* p=%p", p);
+	if (!p) {
+		DEBUG_WEBDAV("* Cannot find ne_session_create or libneon.27.dylib! FAILURE");
+		rc = -1;
+		goto out;
+	}
+    ctx->dav_session.ctx = p( protocol, host, port);
+	dlclose(l);
+#else
     ctx->dav_session.ctx = ne_session_create( protocol, host, port);
+#endif
+
 
     if (ctx->dav_session.ctx == NULL) {
         DEBUG_WEBDAV("Session create with protocol %s failed", protocol );
