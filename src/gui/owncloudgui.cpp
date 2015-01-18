@@ -45,7 +45,6 @@ namespace OCC {
 
 ownCloudGui::ownCloudGui(Application *parent) :
     QObject(parent),
-    _tray(0),
 #if defined(Q_OS_MAC)
     _settingsDialog(new SettingsDialogMac(this)),
 #else
@@ -57,7 +56,7 @@ ownCloudGui::ownCloudGui(Application *parent) :
     _recentItemsMapper(new QSignalMapper(this)),
     _app(parent)
 {
-    _tray = new Systray();
+    _tray = new Systray;
     _tray->setParent(this);
 
     // for the beginning, set the offline icon until the account was verified
@@ -237,6 +236,12 @@ void ownCloudGui::slotComputeOverallSyncStatus()
     if( !_settingsDialog.isNull() )
         _settingsDialog->setGeneralErrors( _startupFails );
 
+    if (folderMan->isAllPaused()) {
+       _tray->setIcon(Theme::instance()->syncStateIcon( SyncResult::Paused ));
+       _tray->setToolTip(tr("Syncing has been paused"));
+       return;
+    }
+
     if( !_startupFails.isEmpty() ) {
         trayMessage = _startupFails.join(QLatin1String("\n"));
         QIcon statusIcon;
@@ -347,6 +352,8 @@ void ownCloudGui::setupContextMenu()
         _contextMenu->addAction(_actionStatus);
         _contextMenu->addMenu(_recentActionsMenu);
         _contextMenu->addSeparator();
+        _contextMenu->addAction(_actionPause);
+        _contextMenu->addSeparator();
     }
     _contextMenu->addAction(_actionSettings);
     if (!Theme::instance()->helpUrl().isEmpty()) {
@@ -418,8 +425,13 @@ void ownCloudGui::setupActions()
     _actionSettings = new QAction(tr("Settings..."), this);
     _actionRecent = new QAction(tr("Details..."), this);
     _actionRecent->setEnabled( true );
+    _actionPause = new QAction("Pause syncing", this);
+    _actionPause->setEnabled( true );
+    _actionPause->setCheckable(true);
+    _actionPause->setChecked(FolderMan::instance()->isAllPaused());
 
     QObject::connect(_actionRecent, SIGNAL(triggered(bool)), SLOT(slotShowSyncProtocol()));
+    QObject::connect(_actionPause, SIGNAL(triggered(bool)), SLOT(slotSetAllPaused(bool)));
     QObject::connect(_actionSettings, SIGNAL(triggered(bool)), SLOT(slotShowSettings()));
     _actionHelp = new QAction(tr("Help"), this);
     QObject::connect(_actionHelp, SIGNAL(triggered(bool)), SLOT(slotHelp()));
@@ -569,7 +581,6 @@ void ownCloudGui::slotShowSyncProtocol()
     _settingsDialog->showActivityPage();
 }
 
-
 void ownCloudGui::slotShutdown()
 {
     // those do delete on close
@@ -655,6 +666,12 @@ void ownCloudGui::slotShowShareDialog(const QString &sharePath, const QString &l
     w->getShares();
     w->setAttribute( Qt::WA_DeleteOnClose, true );
     raiseDialog(w);
+}
+
+void ownCloudGui::slotSetAllPaused(bool paused)
+{
+    FolderMan::instance()->slotSetAllPaused(paused);
+    slotComputeOverallSyncStatus();
 }
 
 

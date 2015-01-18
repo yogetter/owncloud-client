@@ -96,6 +96,8 @@ public:
 
     SocketApi *socketApi();
 
+    bool isAllPaused() const;
+
 signals:
     /**
       * signal to indicate a folder named by alias has changed its sync state.
@@ -113,6 +115,7 @@ public slots:
 
     void slotFolderSyncStarted();
     void slotFolderSyncFinished( const SyncResult& );
+    void slotSetAllPaused(bool paused);
 
     /**
      * Terminates the current folder sync.
@@ -173,6 +176,7 @@ private:
 
     QMap<QString, FolderWatcher*> _folderWatchers;
     QPointer<SocketApi> _socketApi;
+    bool            _allPaused;
 
     /** The aliases of folders that shall be synced. */
     QQueue<QString> _scheduleQueue;

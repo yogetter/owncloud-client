@@ -67,6 +67,8 @@ static const char optionsC[] =
         "                         (to be used with --logdir)\n"
         "  --logflush           : flush the log file after every write.\n"
         "  --confdir <dirname>  : Use the given configuration directory.\n"
+        "  --pause              : Pause all sync operations.\n"
+        "  --continue           : Continue sync operations.\n"
         ;
 
 QString applicationTrPath()
@@ -401,6 +403,10 @@ void Application::parseOptions(const QStringList &options)
             }
         } else if (option == QLatin1String("--logflush")) {
             _logFlush = true;
+        } else if (option == QLatin1String("--pause")) {
+            FolderMan::instance()->setSyncEnabled(false);
+        } else if (option == QLatin1String("--continue")) {
+            FolderMan::instance()->setSyncEnabled(true);
         } else if (option == QLatin1String("--confdir")) {
             if (it.hasNext() && !it.peekNext().startsWith(QLatin1String("--"))) {
                 QString confDir = it.next();
