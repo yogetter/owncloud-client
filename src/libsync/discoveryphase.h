@@ -37,7 +37,7 @@ class Account;
 struct DiscoveryDirectoryResult {
     QString msg;
     int code;
-    QLinkedList<csync_vio_file_stat_t*>::iterator iterator;
+    QLinkedList<csync_vio_file_stat_t*>::const_iterator iterator;
     QLinkedList<csync_vio_file_stat_t *> list;
 };
 
@@ -51,10 +51,10 @@ public:
     // This is not actually a network job, it is just a job
 signals:
     void firstDirectoryPermissions(QString);
-    void finishedWithResult(QLinkedList<csync_vio_file_stat_t*>);
-    void finishedWithError(int csyncErrnoCode, QString msg);
+    void finishedWithResult(const QLinkedList<csync_vio_file_stat_t*> &);
+    void finishedWithError(int csyncErrnoCode, const QString &msg);
 private slots:
-    void directoryListingIteratedSlot(QString,QMap<QString,QString>);
+    void directoryListingIteratedSlot(QString file, const QMap< QString, QString >& map);
     void lsJobFinishedWithoutErrorSlot();
     void lsJobFinishedWithErrorSlot(QNetworkReply*);
 private:
@@ -103,12 +103,12 @@ public:
 
 public slots:
     // From DiscoveryJob:
-    void doOpendirSlot(QString url, DiscoveryDirectoryResult* );
+    void doOpendirSlot(const QString &url, DiscoveryDirectoryResult* );
 
     // From Job:
-    void singleDirectoryJobResultSlot(QLinkedList<csync_vio_file_stat_t*>);
-    void singleDirectoryJobFinishedWithErrorSlot(int csyncErrnoCode, QString msg);
-    void singleDirectoryJobFirstDirectoryPermissionsSlot(QString);
+    void singleDirectoryJobResultSlot(const QLinkedList<csync_vio_file_stat_t*>&);
+    void singleDirectoryJobFinishedWithErrorSlot(int csyncErrnoCode, const QString &msg);
+    void singleDirectoryJobFirstDirectoryPermissionsSlot(const QString&);
 public:
     void setupHooks(DiscoveryJob* discoveryJob, const QString &pathPrefix);
 };

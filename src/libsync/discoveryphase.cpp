@@ -182,7 +182,7 @@ void DiscoverySingleDirectoryJob::abort()
     }
 }
 
-static csync_vio_file_stat_t* propertyMapToFileStat(QMap<QString,QString> map)
+static csync_vio_file_stat_t* propertyMapToFileStat(const QMap<QString,QString> &map)
 {
     csync_vio_file_stat_t* file_stat = csync_vio_file_stat_new();
     qDebug() << Q_FUNC_INFO;
@@ -234,7 +234,7 @@ static csync_vio_file_stat_t* propertyMapToFileStat(QMap<QString,QString> map)
     return file_stat;
 }
 
-void DiscoverySingleDirectoryJob::directoryListingIteratedSlot(QString file,QMap<QString,QString> map)
+void DiscoverySingleDirectoryJob::directoryListingIteratedSlot(QString file,const QMap<QString,QString> &map)
 {
     qDebug() << Q_FUNC_INFO << _subPath << file << map.count() << map.keys() << _account->davPath() << _lsColJob->reply()->request().url().path();
     if (!_ignoredFirst) {
@@ -303,7 +303,7 @@ void DiscoveryMainThread::setupHooks(DiscoveryJob *discoveryJob, const QString &
 }
 
 // Coming from owncloud_opendir -> DiscoveryJob::vio_opendir_hook -> doOpendirSignal
-void DiscoveryMainThread::doOpendirSlot(QString subPath, DiscoveryDirectoryResult *r)
+void DiscoveryMainThread::doOpendirSlot(const QString &subPath, DiscoveryDirectoryResult *r)
 {
     QString fullPath = _pathPrefix;
     if (!_pathPrefix.endsWith('/')) {
@@ -330,7 +330,7 @@ void DiscoveryMainThread::doOpendirSlot(QString subPath, DiscoveryDirectoryResul
 }
 
 
-void DiscoveryMainThread::singleDirectoryJobResultSlot(QLinkedList<csync_vio_file_stat_t *> result)
+void DiscoveryMainThread::singleDirectoryJobResultSlot(const QLinkedList<csync_vio_file_stat_t *> &result)
 {
     if (!_currentDiscoveryDirectoryResult) {
         return; // possibly aborted
@@ -341,7 +341,7 @@ void DiscoveryMainThread::singleDirectoryJobResultSlot(QLinkedList<csync_vio_fil
 
     _currentDiscoveryDirectoryResult->list = result;
     _currentDiscoveryDirectoryResult->code = 0;
-    _currentDiscoveryDirectoryResult->iterator = _currentDiscoveryDirectoryResult->list.begin();
+    _currentDiscoveryDirectoryResult->iterator = _currentDiscoveryDirectoryResult->list.constBegin();
      _currentDiscoveryDirectoryResult = 0; // the sync thread owns it now
 
     _discoveryJob->_vioMutex.lock();
@@ -349,7 +349,7 @@ void DiscoveryMainThread::singleDirectoryJobResultSlot(QLinkedList<csync_vio_fil
     _discoveryJob->_vioMutex.unlock();
 }
 
-void DiscoveryMainThread::singleDirectoryJobFinishedWithErrorSlot(int csyncErrnoCode, QString msg)
+void DiscoveryMainThread::singleDirectoryJobFinishedWithErrorSlot(int csyncErrnoCode, const QString &msg)
 {
     if (!_currentDiscoveryDirectoryResult) {
         return; // possibly aborted
@@ -365,7 +365,7 @@ void DiscoveryMainThread::singleDirectoryJobFinishedWithErrorSlot(int csyncErrno
     _discoveryJob->_vioMutex.unlock();
 }
 
-void DiscoveryMainThread::singleDirectoryJobFirstDirectoryPermissionsSlot(QString p)
+void DiscoveryMainThread::singleDirectoryJobFirstDirectoryPermissionsSlot(const QString &p)
 {
     // Should be thread safe since the sync thread is blocked
     if (!_discoveryJob->_csync_ctx->remote.root_perms) {
@@ -433,7 +433,7 @@ csync_vio_file_stat_t* DiscoveryJob::remote_vio_readdir_hook (csync_vio_handle_t
 
         DiscoveryDirectoryResult *directoryResult = static_cast<DiscoveryDirectoryResult*>(dhandle);
 
-        if (directoryResult->iterator != directoryResult->list.end()) {
+        if (directoryResult->iterator != directoryResult->list.constEnd()) {
             csync_vio_file_stat_t *file_stat = *(directoryResult->iterator);
 
             qDebug() << Q_FUNC_INFO << file_stat;

@@ -84,7 +84,7 @@ signals:
     void csyncUnavailable();
 
     // During update, before reconcile
-    void folderDiscovered(bool local, QString folderUrl);
+    void folderDiscovered(bool local, const QString &folderUrl);
 
     // before actual syncing (after update+reconcile) for each item
     void syncItemDiscovered(const SyncFileItem&);
