@@ -266,6 +266,7 @@ public:
             , _activeJobs(0)
             , _anotherSyncNeeded(false)
             , _account(account)
+            , _maxParallel(0)
     { }
 
     void start(const SyncFileItemVector &_syncedItems);
@@ -339,6 +340,7 @@ signals:
 private:
 
     AccountPtr _account;
+    int _maxParallel;
 
     /** Stores the time since a job touched a file. */
     QHash<QString, QElapsedTimer> _touchedFiles;

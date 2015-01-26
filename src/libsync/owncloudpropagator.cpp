@@ -28,6 +28,7 @@
 #include "configfile.h"
 #include "utility.h"
 #include <json.h>
+#include "account.h"
 
 #ifdef Q_OS_WIN
 #include <windef.h>
@@ -46,11 +47,16 @@ namespace OCC {
 /* The maximum number of active job in parallel  */
 int OwncloudPropagator::maximumActiveJob()
 {
-    static int max = qgetenv("OWNCLOUD_MAX_PARALLEL").toUInt();
-    if (!max) {
-        max = 3; //default
+    if (_maxParallel <= 0) {
+        _maxParallel = qgetenv("OWNCLOUD_MAX_PARALLEL").toUInt();
+        if (_maxParallel <= 0) {
+            _maxParallel = _account->capabilities().value("files").toMap().value("maxparallels").toInt();
+        }
+        if (_maxParallel <= 0) {
+            _maxParallel = 3; // default value if the server says "O" or did not specify anything
+        }
     }
-    return max;
+    return _maxParallel;
 }
 
 /** Updates or creates a blacklist entry for the given item.
