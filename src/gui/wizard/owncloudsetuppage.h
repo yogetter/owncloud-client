@@ -70,6 +70,8 @@ signals:
 
 private:
   bool urlHasChanged();
+  bool validateUrl( const QString& url, QString& domain );
+
 
   Ui_OwncloudSetupPage _ui;
   

@@ -33,12 +33,12 @@
 
 namespace OCC
 {
+const char *EmailMatchRegExpC = "^[-\\w]+@([-\\w]+).de$";
 
 OwncloudSetupPage::OwncloudSetupPage(QWidget *parent)
   : QWizardPage(),
     _ui(),
     _oCUrl(),
-    _ocUser(),
     _authTypeKnown(false),
     _checking(false),
     _authType(WizardCommon::HttpCreds),
@@ -101,43 +101,79 @@ void OwncloudSetupPage::slotUrlChanged(const QString& url)
 {
     _authTypeKnown = false;
 
-    QString newUrl = url;
-    if (url.endsWith("index.php")) {
-        newUrl.chop(9);
+    if( ! Theme::instance()->serverUrlComputedFromUser() ) {
+        QString newUrl = url;
+        if (url.endsWith("index.php")) {
+            newUrl.chop(9);
+        }
+        if (url.endsWith("remote.php/webdav")) {
+            newUrl.chop(17);
+        }
+        if (url.endsWith("remote.php/webdav/")) {
+            newUrl.chop(18);
+        }
+        if (newUrl != url) {
+            _ui.leUrl->setText(newUrl);
+        }
+
+        if (url.startsWith(QLatin1String("http://"))) {
+            _ui.urlLabel->setPixmap( QPixmap(":/client/resources/lock-http.png"));
+            _ui.urlLabel->setToolTip(tr("This url is NOT secure as it is not encrypted.\n"
+                                        "It is not advisable to use it."));
+        } else {
+            _ui.urlLabel->setPixmap( QPixmap(":/client/resources/lock-https.png"));
+            _ui.urlLabel->setToolTip(tr("This url is secure. You can use it."));
+        }
     }
-    if (url.endsWith("remote.php/webdav")) {
-        newUrl.chop(17);
-    }
-    if (url.endsWith("remote.php/webdav/")) {
-        newUrl.chop(18);
-    }
-    if (newUrl != url) {
-        _ui.leUrl->setText(newUrl);
+}
+
+bool OwncloudSetupPage::validateUrl( const QString& url, QString& domain )
+{
+    bool re = false;
+
+    QRegExp rex( EmailMatchRegExpC );
+    if( rex.exactMatch(url) ) {
+        domain = rex.cap(1);
+        re = true;
     }
 
-    if (url.startsWith(QLatin1String("http://"))) {
-        _ui.urlLabel->setPixmap(QPixmap(Theme::hidpiFileName(":/client/resources/lock-http.png")));
-        _ui.urlLabel->setToolTip(tr("This url is NOT secure as it is not encrypted.\n"
-                                    "It is not advisable to use it."));
-    } else {
-        _ui.urlLabel->setPixmap(QPixmap(Theme::hidpiFileName(":/client/resources/lock-https.png")));
-        _ui.urlLabel->setToolTip(tr("This url is secure. You can use it."));
-    }
+    return re;
 }
 
 void OwncloudSetupPage::slotUrlEditFinished()
 {
     QString url = _ui.leUrl->text();
-    if (QUrl(url).isRelative()) {
-        // no scheme defined, set one
-        url.prepend("https://");
+
+    if( Theme::instance()->serverUrlComputedFromUser() ) {
+        // this is the mapping: frank@uni-münster.de --> uni-münster.sciebo.de
+        QString domain;
+        if( validateUrl( url, domain )) {
+            _oCUrl = QString( "https://%1.sciebo.de").arg(domain);
+            _ocUser = url;
+        }
+    } else {
+        url = _ui.leUrl->text();
+        if (QUrl(url).isRelative()) {
+            // no scheme defined, set one
+            url.prepend("https://");
+        }
+        _ui.leUrl->setText(url);
     }
-    _ui.leUrl->setText(url);
 }
 
 bool OwncloudSetupPage::isComplete() const
 {
-    return !_ui.leUrl->text().isEmpty() && !_checking;
+    const QString user = _ui.leUrl->text();
+    if( Theme::instance()->serverUrlComputedFromUser() )  {
+        bool re = false;
+        QRegExp rex( EmailMatchRegExpC );
+        if( rex.exactMatch(user) ) {
+            re = true;
+        }
+        return re && !_checking;
+    } else {
+        return !user.isEmpty() && !_checking;
+    }
 }
 
 void OwncloudSetupPage::initializePage()
@@ -163,6 +199,10 @@ void OwncloudSetupPage::initializePage()
         setButtonText(QWizard::CommitButton, tr("&Next >"));
         validatePage();
         setVisible(false);
+    }
+    if( Theme::instance()->serverUrlComputedFromUser() ) {
+        _ui.label_2->setText(tr("Username:"));
+        _ui.leUrl->setPlaceholderText(tr("joe@uni..."));
     }
 }
 
@@ -201,7 +241,12 @@ int OwncloudSetupPage::nextId() const
 
 QString OwncloudSetupPage::url() const
 {
-    QString url = _ui.leUrl->text().simplified();
+    QString url;
+    if( Theme::instance()->serverUrlComputedFromUser() ) {
+        url = _oCUrl;
+    } else {
+        url = _ui.leUrl->text().simplified();
+    }
     return url;
 }
 

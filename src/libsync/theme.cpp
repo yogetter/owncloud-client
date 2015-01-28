@@ -384,6 +384,10 @@ bool Theme::wizardSelectiveSyncDefaultNothing() const
     return false;
 }
 
+bool Theme::serverUrlComputedFromUser() const
+{
+    return false;
+}
 
 } // end namespace mirall
 

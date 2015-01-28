@@ -195,6 +195,11 @@ public:
      */
     virtual bool wizardSelectiveSyncDefaultNothing() const;
 
+    /**
+     * When true, the server url is computed from a given user name which is an email
+     */
+    virtual bool serverUrlComputedFromUser() const;
+
 protected:
     QIcon themeIcon(const QString& name, bool sysTray = false) const;
     Theme();
