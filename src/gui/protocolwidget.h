@@ -42,7 +42,7 @@ public:
 signals:
 
 public slots:
-    void slotProgressInfo( const QString& folder, const Progress::Info& progress );
+    void slotProgressInfo( const QString& folder, const ProgressInfo& progress );
     void slotOpenFile( QTreeWidgetItem* item, int );
 
 protected slots:

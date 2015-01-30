@@ -112,7 +112,7 @@ ProgressDispatcher::~ProgressDispatcher()
 
 }
 
-void ProgressDispatcher::setProgressInfo(const QString& folder, const Progress::Info& progress)
+void ProgressDispatcher::setProgressInfo(const QString& folder, const ProgressInfo& progress)
 {
     if( folder.isEmpty())
 // The update phase now also has progress
