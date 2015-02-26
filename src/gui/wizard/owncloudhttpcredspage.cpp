@@ -72,15 +72,27 @@ void OwncloudHttpCredsPage::initializePage()
     WizardCommon::initErrorLabel(_ui.errorLabel);
 
     OwncloudWizard* ocWizard = qobject_cast< OwncloudWizard* >(wizard());
-    AbstractCredentials *cred = ocWizard->account()->credentials();
-    HttpCredentials *httpCreds = qobject_cast<HttpCredentials*>(cred);
-    if (httpCreds) {
-        const QString user = httpCreds->fetchUser();
+    if( Theme::instance()->serverUrlComputedFromUser() ) {
+        // alternative wizard mode where the url is taken from the user name
+        // that was entered on the very first page
+        const QString user = ocWizard->prelimUser();
         if (!user.isEmpty()) {
             _ui.leUsername->setText(user);
+            _ui.leUsername->setEnabled(false);
         }
+        _ui.lePassword->setFocus();
+    } else {
+        AbstractCredentials *cred = ocWizard->account()->credentials();
+        HttpCredentials *httpCreds = qobject_cast<HttpCredentials*>(cred);
+        if (httpCreds) {
+            const QString user = httpCreds->fetchUser();
+            if (!user.isEmpty()) {
+                _ui.leUsername->setText(user);
+            }
+        }
+        _ui.leUsername->setFocus();
     }
-    _ui.leUsername->setFocus();
+
 }
 
 void OwncloudHttpCredsPage::cleanupPage()

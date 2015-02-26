@@ -61,6 +61,11 @@ public:
     void successfulStep();
     AbstractCredentials* getCredentials() const;
 
+    // in the case of Theme::serverUrlComputedFromUser(), this function
+    // will return the username that was entered on the first page of the
+    // setup page.
+    QString prelimUser() const;
+
     void raiseCertificatePopup();
     QByteArray ownCloudCertificate;
     QString ownCloudPrivateKey;

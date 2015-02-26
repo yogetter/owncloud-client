@@ -50,6 +50,7 @@ public:
   void setRemoteFolder( const QString& remoteFolder);
   void setMultipleFoldersExist( bool exist );
   void setAuthType(WizardCommon::AuthType type);
+  QString ocUser() const;
 
 public slots:
   void setErrorString( const QString&, bool retryHTTPonly );
@@ -76,7 +77,7 @@ private:
   Ui_OwncloudSetupPage _ui;
   
   QString _oCUrl;
-  QString _ocUser;
+  QString _oCUser;
   bool    _authTypeKnown;
   bool    _checking;
   bool    _configExists;

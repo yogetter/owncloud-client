@@ -26,7 +26,6 @@
 
 #include "wizard/owncloudwizardcommon.h"
 #include "wizard/owncloudsetuppage.h"
-#include "wizard/owncloudconnectionmethoddialog.h"
 #include "../3rdparty/certificates/p12topem.h"
 #include "theme.h"
 #include "account.h"
@@ -148,8 +147,10 @@ void OwncloudSetupPage::slotUrlEditFinished()
         // this is the mapping: frank@uni-münster.de --> uni-münster.sciebo.de
         QString domain;
         if( validateUrl( url, domain )) {
+            // remember the parameter url here, as its actually the username in
+            // this theme constellation.
+            _oCUser = url;
             _oCUrl = QString( "https://%1.sciebo.de").arg(domain);
-            _ocUser = url;
         }
     } else {
         url = _ui.leUrl->text();
@@ -248,6 +249,11 @@ QString OwncloudSetupPage::url() const
         url = _ui.leUrl->text().simplified();
     }
     return url;
+}
+
+QString OwncloudSetupPage::ocUser() const
+{
+    return _oCUser;
 }
 
 bool OwncloudSetupPage::validatePage()

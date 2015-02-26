@@ -244,5 +244,10 @@ void OwncloudWizard::raiseCertificatePopup()
     emit needCertificate();
 }
 
+QString OwncloudWizard::prelimUser() const
+{
+    return _setupPage->ocUser();
+}
+
 
 } // end namespace
