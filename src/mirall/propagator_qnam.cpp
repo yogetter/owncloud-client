@@ -163,6 +163,8 @@ void PropagateUploadFileQNAM::slotChecksumCalculated( )
 
     if( !checksum.isEmpty() ) {
         _item._checksum.append(checksum);
+    } else {
+        _item._checksum.clear();
     }
 
     startUpload();
