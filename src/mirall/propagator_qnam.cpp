@@ -126,22 +126,21 @@ void PropagateUploadFileQNAM::start()
         startUpload();
     } else {
         // Calculate the checksum in a different thread first.
-        _watcher = new QFutureWatcher<QByteArray>;
-        connect( _watcher, SIGNAL(finished()),
+        connect( &_watcher, SIGNAL(finished()),
                  this, SLOT(slotChecksumCalculated()));
 
         if( transChecksum == "MD5" ) {
             _item._checksum = "MD5:";
-            _watcher->setFuture(QtConcurrent::run(FileSystem::calcMd5Worker,filePath));
+            _watcher.setFuture(QtConcurrent::run(FileSystem::calcMd5Worker,filePath));
 
         } else if( transChecksum == "SHA1" ) {
             _item._checksum = "SHA1:";
-            _watcher->setFuture(QtConcurrent::run( FileSystem::calcSha1Worker, filePath));
+            _watcher.setFuture(QtConcurrent::run( FileSystem::calcSha1Worker, filePath));
         }
 #ifdef ZLIB_FOUND
         else if( transChecksum == "Adler32" ) {
             _item._checksum = "Adler32:";
-            _watcher->setFuture(QtConcurrent::run(FileSystem::calcAdler32Worker, filePath));
+            _watcher.setFuture(QtConcurrent::run(FileSystem::calcAdler32Worker, filePath));
         }
 #endif
     }
@@ -149,15 +148,12 @@ void PropagateUploadFileQNAM::start()
 
 void PropagateUploadFileQNAM::slotChecksumCalculated( )
 {
-    if( _watcher ) {
-        QByteArray checksum = _watcher->future().result();
+    QByteArray checksum = _watcher.future().result();
 
-        if( !checksum.isEmpty() ) {
-            _item._checksum.append(checksum);
-        }
-
-        _watcher->deleteLater();
+    if( !checksum.isEmpty() ) {
+        _item._checksum.append(checksum);
     }
+
     startUpload();
 }
 
@@ -827,25 +823,22 @@ void PropagateDownloadFileQNAM::slotGetFinished()
             const QByteArray type = header.left(indx).toUpper();
             _expectedHash = header.mid(indx+1);
 
-            _watcher = new QFutureWatcher<QByteArray>;
-            connect( _watcher, SIGNAL(finished()),
-                     this, SLOT(slotDownloadChecksumCheckFinished()) );
+            connect( &_watcher, SIGNAL(finished()), this, SLOT(slotDownloadChecksumCheckFinished()));
+
             // start the calculation in different thread
             if( type == "MD5" ) {
-                _watcher->setFuture(QtConcurrent::run(FileSystem::calcMd5Worker, _tmpFile.fileName()));
+                _watcher.setFuture(QtConcurrent::run(FileSystem::calcMd5Worker, _tmpFile.fileName()));
             } else if( type == "SHA1" ) {
-                _watcher->setFuture(QtConcurrent::run(FileSystem::calcSha1Worker, _tmpFile.fileName()));
+                _watcher.setFuture(QtConcurrent::run(FileSystem::calcSha1Worker, _tmpFile.fileName()));
             }
 #ifdef ZLIB_FOUND
             else if( type == "ADLER32" ) {
-                _watcher->setFuture(QtConcurrent::run(FileSystem::calcAdler32Worker, _tmpFile.fileName()));
+                _watcher.setFuture(QtConcurrent::run(FileSystem::calcAdler32Worker, _tmpFile.fileName()));
             }
 #endif
             else {
                 qDebug() << "Unknown checksum type" << type;
-                delete _watcher;
-                // the checksum can no be verified, so assume all ok with the file.
-                downloadFinished();
+                ok = false;
             }
         }
     } else {
@@ -856,9 +849,7 @@ void PropagateDownloadFileQNAM::slotGetFinished()
 
 void PropagateDownloadFileQNAM::slotDownloadChecksumCheckFinished()
 {
-    if( _watcher ) {
-        QByteArray hash = _watcher->future().result();
-        _watcher->deleteLater();
+    QByteArray hash = _watcher.future().result();
 
         // FIXME hash == "notfound" is ok
         if( hash == "notfound" ) {

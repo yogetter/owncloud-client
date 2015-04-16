@@ -104,7 +104,7 @@ private slots:
     void startNextChunk();
     void finalize(const SyncFileItem&);
 private:
-    QFutureWatcher<QByteArray> *_watcher;
+    QFutureWatcher<QByteArray> _watcher;
 };
 
 
@@ -175,7 +175,7 @@ private slots:
 
 private:
     QByteArray _expectedHash;
-    QFutureWatcher<QByteArray> *_watcher;
+    QFutureWatcher<QByteArray> _watcher;
 
 
 };
