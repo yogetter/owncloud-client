@@ -33,6 +33,14 @@
 namespace Mirall {
 
 /**
+ * Tags for checksum headers.
+ */
+static const char checkSumMD5C[] = "MD5";
+static const char checkSumSHA1C[] = "SHA1";
+static const char checkSumAdlerC[] = "Adler32";
+static const char checkSumAdlerUpperC[] = "ADLER32";
+
+/**
  * The mtime of a file must be at least this many milliseconds in
  * the past for an upload to be started. Otherwise the propagator will
  * assume it's still being changed and skip it.
@@ -129,17 +137,20 @@ void PropagateUploadFileQNAM::start()
         connect( &_watcher, SIGNAL(finished()),
                  this, SLOT(slotChecksumCalculated()));
 
-        if( transChecksum == "MD5" ) {
-            _item._checksum = "MD5:";
+        if( transChecksum == checkSumMD5C ) {
+            _item._checksum = checkSumMD5C;
+            _item._checksum += ":";
             _watcher.setFuture(QtConcurrent::run(FileSystem::calcMd5Worker,filePath));
 
-        } else if( transChecksum == "SHA1" ) {
-            _item._checksum = "SHA1:";
+        } else if( transChecksum == checkSumSHA1C ) {
+            _item._checksum = checkSumSHA1C;
+            _item._checksum += ":";
             _watcher.setFuture(QtConcurrent::run( FileSystem::calcSha1Worker, filePath));
         }
 #ifdef ZLIB_FOUND
-        else if( transChecksum == "Adler32" ) {
-            _item._checksum = "Adler32:";
+        else if( transChecksum == checkSumAdlerC) {
+            _item._checksum = checkSumAdlerC;
+            _item._checksum += ":";
             _watcher.setFuture(QtConcurrent::run(FileSystem::calcAdler32Worker, filePath));
         }
 #endif
@@ -825,6 +836,7 @@ void PropagateDownloadFileQNAM::slotGetFinished()
             qDebug() << "Checksum header malformed:" << header;
             ok = false;
         }
+
         if( ok ) {
             const QByteArray type = header.left(indx).toUpper();
             _expectedHash = header.mid(indx+1);
@@ -832,13 +844,13 @@ void PropagateDownloadFileQNAM::slotGetFinished()
             connect( &_watcher, SIGNAL(finished()), this, SLOT(slotDownloadChecksumCheckFinished()));
 
             // start the calculation in different thread
-            if( type == "MD5" ) {
+            if( type == checkSumMD5C ) {
                 _watcher.setFuture(QtConcurrent::run(FileSystem::calcMd5Worker, _tmpFile.fileName()));
-            } else if( type == "SHA1" ) {
+            } else if( type == checkSumSHA1C ) {
                 _watcher.setFuture(QtConcurrent::run(FileSystem::calcSha1Worker, _tmpFile.fileName()));
             }
 #ifdef ZLIB_FOUND
-            else if( type == "ADLER32" ) {
+            else if( type == checkSumAdlerUpperC ) {
                 _watcher.setFuture(QtConcurrent::run(FileSystem::calcAdler32Worker, _tmpFile.fileName()));
             }
 #endif
