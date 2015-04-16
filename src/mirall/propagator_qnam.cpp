@@ -818,8 +818,14 @@ void PropagateDownloadFileQNAM::slotGetFinished()
     if( job->reply()->hasRawHeader("OC-Checksum")) {
         QByteArray header = job->reply()->rawHeader("OC-Checksum");
 
-        if( !header.isNull() && header.indexOf(':') > 1 ) {
-            int indx = header.indexOf(':');
+        bool ok = true;
+
+        int indx = header.indexOf(':');
+        if( indx < 0 ) {
+            qDebug() << "Checksum header malformed:" << header;
+            ok = false;
+        }
+        if( ok ) {
             const QByteArray type = header.left(indx).toUpper();
             _expectedHash = header.mid(indx+1);
 
@@ -841,6 +847,13 @@ void PropagateDownloadFileQNAM::slotGetFinished()
                 ok = false;
             }
         }
+
+        if( !ok) {
+            _tmpFile.remove();
+            _propagator->_anotherSyncNeeded = true;
+            done(SyncFileItem::SoftError, tr("The checksum header was malformed."));
+            return;
+        }
     } else {
         // No OC-Checksum header, go directly to continue handle the download
         downloadFinished();
@@ -851,19 +864,13 @@ void PropagateDownloadFileQNAM::slotDownloadChecksumCheckFinished()
 {
     QByteArray hash = _watcher.future().result();
 
-        // FIXME hash == "notfound" is ok
-        if( hash == "notfound" ) {
-            qDebug() << "Hash type not found!";
-        } else {
-            if( hash.isEmpty() || hash != _expectedHash ) {
-                _tmpFile.remove();
-                _propagator->_anotherSyncNeeded = true;
-                done(SyncFileItem::SoftError, tr("The file downloaded with a broken checksum, will be redownloaded."));
-                return;
-            } else {
-                qDebug() << "Checksum checked and matching: " << _expectedHash;
-            }
-        }
+    if( hash != _expectedHash ) {
+        _tmpFile.remove();
+        _propagator->_anotherSyncNeeded = true;
+        done(SyncFileItem::SoftError, tr("The file downloaded with a broken checksum, will be redownloaded."));
+        return;
+    } else {
+        qDebug() << "Checksum checked and matching: " << _expectedHash;
     }
 
     downloadFinished();
