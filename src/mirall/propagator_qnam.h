@@ -21,6 +21,7 @@
 
 #include <QBuffer>
 #include <QFile>
+#include <QFutureWatcher>
 
 namespace Mirall {
 
@@ -95,11 +96,15 @@ public:
         : PropagateItemJob(propagator, item), _startChunk(0), _currentChunk(0), _chunkCount(0), _transferId(0) {}
     void start() Q_DECL_OVERRIDE;
 private slots:
+    void startUpload();
+    void slotChecksumCalculated();
     void slotPutFinished();
     void slotUploadProgress(qint64,qint64);
     void abort() Q_DECL_OVERRIDE;
     void startNextChunk();
     void finalize(const SyncFileItem&);
+private:
+    QFutureWatcher<QByteArray> *_watcher;
 };
 
 
@@ -166,6 +171,11 @@ private slots:
     void abort() Q_DECL_OVERRIDE;
     void downloadFinished();
     void slotDownloadProgress(qint64,qint64);
+    void slotDownloadChecksumCheckFinished();
+
+private:
+    QByteArray _expectedHash;
+    QFutureWatcher<QByteArray> *_watcher;
 
 
 };

@@ -26,6 +26,8 @@
 #include <QNetworkAccessManager>
 #include <QFileInfo>
 #include <QDir>
+#include <QtConcurrent>
+
 #include <cmath>
 
 namespace Mirall {
@@ -60,41 +62,6 @@ static QByteArray get_etag_from_reply(QNetworkReply *reply)
         ret = parseEtag(reply->rawHeader("ETag"));
     }
     return ret;
-}
-
-
-
-bool checkHashSumOfFile( const QString& fileName, const QByteArray& header )
-{
-    int indx = header.indexOf(':');
-    const QByteArray type = header.left(indx).toUpper();
-    const QByteArray sum  = header.mid(indx+1);
-
-    Utility::StopWatch watch;
-    watch.start();
-    // start the calculation in different thread
-    QByteArray hash("notfound");
-    if( type == "MD5" ) {
-         hash = FileSystem::calcMd5(fileName);
-    } else if( type == "SHA1" ) {
-        hash = FileSystem::calcSha1(fileName);
-    }
-#if ZLIB_FOUND
-    else if( type == "Adler32" ) {
-        hash = FileSystem::calcAdler32(fileName);
-    }
-#endif
-    qDebug() << "Calculation of checksum took" << watch.stop();
-
-    // if the hashtype is not know, lets assume the check is positive
-    if( hash == "notfound" ) {
-        qDebug() << "Unknown hash type: "  << type;
-        return true;
-    }
-    if( !hash.isEmpty() && hash == sum ) {
-        return true;
-    }
-    return false;
 }
 
 /**
@@ -154,20 +121,49 @@ void PropagateUploadFileQNAM::start()
     // calculate the files checksum
     const QString transChecksum = cfg.transmissionChecksum();
 
-    if( !transChecksum.isEmpty() ) {
+    if( transChecksum.isEmpty() ) {
+        // no checksumming required, jump to really start the uplaod
+        startUpload();
+    } else {
+        // Calculate the checksum in a different thread first.
+        _watcher = new QFutureWatcher<QByteArray>;
+        connect( _watcher, SIGNAL(finished()),
+                 this, SLOT(slotChecksumCalculated()));
+
         if( transChecksum == "MD5" ) {
-            _item._checksum = "MD5:"+FileSystem::calcMd5( filePath );
+            _item._checksum = "MD5:";
+            _watcher->setFuture(QtConcurrent::run(FileSystem::calcMd5Worker,filePath));
 
         } else if( transChecksum == "SHA1" ) {
-            _item._checksum = "MD5:"+FileSystem::calcSha1( filePath );
-
+            _item._checksum = "SHA1:";
+            _watcher->setFuture(QtConcurrent::run( FileSystem::calcSha1Worker, filePath));
         }
 #ifdef ZLIB_FOUND
         else if( transChecksum == "Adler32" ) {
-            _item._checksum = "Adler32:"+FileSystem::calcAdler32( filePath );
+            _item._checksum = "Adler32:";
+            _watcher->setFuture(QtConcurrent::run(FileSystem::calcAdler32Worker, filePath));
         }
 #endif
     }
+}
+
+void PropagateUploadFileQNAM::slotChecksumCalculated( )
+{
+    if( _watcher ) {
+        QByteArray checksum = _watcher->future().result();
+
+        if( !checksum.isEmpty() ) {
+            _item._checksum.append(checksum);
+        }
+
+        _watcher->deleteLater();
+    }
+    startUpload();
+}
+
+void PropagateUploadFileQNAM::startUpload()
+{
+    const QString filePath = _propagator->getFilePath(_item._file);
 
     _file = new QFile( filePath, this );
     if (!_file->open(QIODevice::ReadOnly)) {
@@ -827,16 +823,58 @@ void PropagateDownloadFileQNAM::slotGetFinished()
         QByteArray header = job->reply()->rawHeader("OC-Checksum");
 
         if( !header.isNull() && header.indexOf(':') > 1 ) {
-            if( ! checkHashSumOfFile(_tmpFile.fileName(), header)) {
+            int indx = header.indexOf(':');
+            const QByteArray type = header.left(indx).toUpper();
+            _expectedHash = header.mid(indx+1);
+
+            _watcher = new QFutureWatcher<QByteArray>;
+            connect( _watcher, SIGNAL(finished()),
+                     this, SLOT(slotDownloadChecksumCheckFinished()) );
+            // start the calculation in different thread
+            if( type == "MD5" ) {
+                _watcher->setFuture(QtConcurrent::run(FileSystem::calcMd5Worker, _tmpFile.fileName()));
+            } else if( type == "SHA1" ) {
+                _watcher->setFuture(QtConcurrent::run(FileSystem::calcSha1Worker, _tmpFile.fileName()));
+            }
+#ifdef ZLIB_FOUND
+            else if( type == "ADLER32" ) {
+                _watcher->setFuture(QtConcurrent::run(FileSystem::calcAdler32Worker, _tmpFile.fileName()));
+            }
+#endif
+            else {
+                qDebug() << "Unknown checksum type" << type;
+                delete _watcher;
+                // the checksum can no be verified, so assume all ok with the file.
+                downloadFinished();
+            }
+        }
+    } else {
+        // No OC-Checksum header, go directly to continue handle the download
+        downloadFinished();
+    }
+}
+
+void PropagateDownloadFileQNAM::slotDownloadChecksumCheckFinished()
+{
+    if( _watcher ) {
+        QByteArray hash = _watcher->future().result();
+        _watcher->deleteLater();
+
+        // FIXME hash == "notfound" is ok
+        if( hash == "notfound" ) {
+            qDebug() << "Hash type not found!";
+        } else {
+            if( hash.isEmpty() || hash != _expectedHash ) {
                 _tmpFile.remove();
                 _propagator->_anotherSyncNeeded = true;
-                done(SyncFileItem::SoftError, tr("The file downloaded with a broken checksum."));
+                done(SyncFileItem::SoftError, tr("The file downloaded with a broken checksum, will be redownloaded."));
                 return;
             } else {
-                qDebug() << "Checksum checked and matching: " << header;
+                qDebug() << "Checksum checked and matching: " << _expectedHash;
             }
         }
     }
+
     downloadFinished();
 }
 

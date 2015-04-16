@@ -56,4 +56,13 @@ bool renameReplace(const QString &originFileName, const QString &destinationFile
 QByteArray calcMd5( const QString& fileName );
 QByteArray calcSha1( const QString& fileName );
 QByteArray calcAdler32( const QString& fileName );
+
+#ifdef ZLIB_FOUND
+QByteArray calcAdler32Worker( const QString& filename );
+#endif
+QByteArray calcSha1Worker( const QString& filename );
+QByteArray calcMd5Worker( const QString& filename );
+
+
+
 }}

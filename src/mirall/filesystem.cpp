@@ -159,7 +159,7 @@ bool FileSystem::renameReplace(const QString& originFileName, const QString& des
     return true;
 }
 
-QByteArray calcMd5Worker( const QString& filename )
+QByteArray FileSystem::calcMd5Worker( const QString& filename )
 {
     QByteArray arr;
 
@@ -177,7 +177,7 @@ QByteArray calcMd5Worker( const QString& filename )
     return arr;
 }
 
-QByteArray calcSha1Worker( const QString& filename )
+QByteArray FileSystem::calcSha1Worker( const QString& filename )
 {
     QByteArray arr;
 
@@ -196,7 +196,7 @@ QByteArray calcSha1Worker( const QString& filename )
 }
 
 #ifdef ZLIB_FOUND
-QByteArray calcAdler32Worker( const QString& filename )
+QByteArray FileSystem::calcAdler32Worker( const QString& filename )
 {
   unsigned int adler = adler32(0L, Z_NULL, 0);
 
