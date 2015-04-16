@@ -121,10 +121,11 @@ void PropagateUploadFileQNAM::start()
 {
     MirallConfigFile cfg; // FIXME: Do not open it for each and every propagation.
 
+    const QString filePath = _propagator->getFilePath(_item._file);
+    _item._modtime = FileSystem::getModTime(filePath);
+
     if (_propagator->_abortRequested.fetchAndAddRelaxed(0))
         return;
-
-    const QString filePath = _propagator->getFilePath(_item._file);
 
     // calculate the files checksum
     const QString transChecksum = cfg.transmissionChecksum();
@@ -182,7 +183,19 @@ void PropagateUploadFileQNAM::startUpload()
     }
 
     // Update the mtime and size, it might have changed since discovery.
+    time_t prevModtime = _item._modtime; // the value was set in PropagateUploadFileQNAM::start()
+    // but a potential checksum calculation could have taken some time during which the file could
+    // have been changed again, so better check again here.
+
     _item._modtime = FileSystem::getModTime(_file->fileName());
+
+    if( prevModtime != _item._modtime ) {
+        _propagator->_anotherSyncNeeded = true;
+        done(SyncFileItem::SoftError, tr("Local filei changed while calculating the checksum."));
+        delete _file;
+        return;
+    }
+
     quint64 fileSize = _file->size();
     _item._size = fileSize;
 
