@@ -19,7 +19,7 @@
 #include "account.h"
 #include "syncjournaldb.h"
 #include "syncjournalfilerecord.h"
-#include "utility.h"
+
 #include "filesystem.h"
 #include "propagatorjobs.h"
 #include "mirallconfigfile.h"
@@ -129,6 +129,7 @@ void PropagateUploadFileQNAM::start()
 
     // calculate the files checksum
     const QString transChecksum = cfg.transmissionChecksum();
+    _stopWatch.start();
 
     if( transChecksum.isEmpty() ) {
         // no checksumming required, jump to really start the uplaod
@@ -174,6 +175,8 @@ void PropagateUploadFileQNAM::slotChecksumCalculated( )
 void PropagateUploadFileQNAM::startUpload()
 {
     const QString filePath = _propagator->getFilePath(_item._file);
+
+    _stopWatch.addLapTime(QLatin1String("Checksum"));
 
     _file = new QFile( filePath, this );
     if (!_file->open(QIODevice::ReadOnly)) {
@@ -223,7 +226,6 @@ void PropagateUploadFileQNAM::startUpload()
     }
 
     _currentChunk = 0;
-    _duration.start();
 
     _propagator->_activeJobs++;
     emit progress(_item, 0);
@@ -471,6 +473,11 @@ void PropagateUploadFileQNAM::slotPutFinished()
         QMetaObject::invokeMethod(newJob, "start");
         return;
     }
+
+    // performance logging
+    _item._requestDuration = _stopWatch.stop();
+    qDebug() << "*==* duration UPLOAD" << _item._size << _stopWatch.durationOfLap(QLatin1String("Checksum")) << _item._requestDuration;
+
     finalize(_item);
 }
 
@@ -482,8 +489,6 @@ void PropagateUploadFileQNAM::finalize(const SyncFileItem &copy)
     _item._fileId = copy._fileId;
 
     _propagator->_activeJobs--;
-
-    _item._requestDuration = _duration.elapsed();
 
     _propagator->_journal->setFileRecord(SyncJournalFileRecord(_item, _propagator->getFilePath(_item._file)));
     // Remove from the progress database:
@@ -680,6 +685,7 @@ void PropagateDownloadFileQNAM::start()
     }
 
     emit progress(_item, 0);
+    _stopWatch.start();
 
     QString tmpFileName;
     QByteArray expectedEtagForResume;
@@ -820,7 +826,7 @@ void PropagateDownloadFileQNAM::slotGetFinished()
         // (If it was really empty by the server, the GETFileJob will have errored
         _item._etag = parseEtag(job->etag());
     }
-    _item._requestDuration = job->duration();
+    _item._requestDuration = job->duration(); // duration of the download
     _item._responseTimeStamp = job->responseTimestamp();
 
     _tmpFile.close();
@@ -986,6 +992,11 @@ void PropagateDownloadFileQNAM::downloadFinished()
     _propagator->_journal->setFileRecord(SyncJournalFileRecord(_item, fn));
     _propagator->_journal->setDownloadInfo(_item._file, SyncJournalDb::DownloadInfo());
     _propagator->_journal->commit("download file start2");
+
+    qDebug() << "*==* duration DOWNLOAD" << _item._size << _stopWatch.stop()-_item._requestDuration
+             << _item._requestDuration;
+
+
     done(isConflict ? SyncFileItem::Conflict : SyncFileItem::Success);
 }
 

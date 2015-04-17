@@ -18,6 +18,7 @@
 #include "owncloudpropagator.h"
 #include "owncloudpropagator_p.h"
 #include "networkjobs.h"
+#include "utility.h"
 
 #include <QBuffer>
 #include <QFile>
@@ -84,13 +85,6 @@ signals:
 
 class PropagateUploadFileQNAM : public PropagateItemJob {
     Q_OBJECT
-    QPointer<PUTFileJob> _job;
-    QFile *_file;
-    int _startChunk;
-    int _currentChunk;
-    int _chunkCount;
-    int _transferId;
-    QElapsedTimer _duration;
 public:
     PropagateUploadFileQNAM(OwncloudPropagator* propagator,const SyncFileItem& item)
         : PropagateItemJob(propagator, item), _startChunk(0), _currentChunk(0), _chunkCount(0), _transferId(0) {}
@@ -104,7 +98,15 @@ private slots:
     void startNextChunk();
     void finalize(const SyncFileItem&);
 private:
+    QPointer<PUTFileJob> _job;
+    QFile *_file;
+    int _startChunk;
+    int _currentChunk;
+    int _chunkCount;
+    int _transferId;
+
     QFutureWatcher<QByteArray> _watcher;
+    Utility::StopWatch _stopWatch;
 };
 
 
@@ -176,7 +178,7 @@ private slots:
 private:
     QByteArray _expectedHash;
     QFutureWatcher<QByteArray> _watcher;
-
+    Utility::StopWatch _stopWatch;
 
 };
 
