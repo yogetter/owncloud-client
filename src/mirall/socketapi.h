@@ -77,12 +77,12 @@ private:
 
     Q_INVOKABLE void command_VERSION(const QString& argument, SocketType* socket);
 
+    QList<SocketType*> _listeners;
 #ifdef SOCKETAPI_TCP
     QTcpServer _localServer;
 #else
     QLocalServer _localServer;
 #endif
-    QList<SocketType*> _listeners;
     c_strlist_t *_excludes;
     QHash<Folder*, SqlQuery*> _dbQueries;
     QHash<Folder*, SqlDatabase*> _openDbs;
