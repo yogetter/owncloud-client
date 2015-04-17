@@ -44,7 +44,6 @@ bool AbstractNetworkJob::preOc7WasDetected = false;
 
 AbstractNetworkJob::AbstractNetworkJob(Account *account, const QString &path, QObject *parent)
     : QObject(parent)
-    , _duration(0)
     , _ignoreCredentialFailure(false)
     , _reply(0)
     , _account(account)
@@ -161,7 +160,6 @@ void AbstractNetworkJob::slotFinished()
 
     // get the Date timestamp from reply
     _responseTimestamp = QString::fromAscii(_reply->rawHeader("Date"));
-    _duration = _durationTimer.elapsed();
 
     bool discard = finished();
     AbstractCredentials *creds = _account->credentials();
@@ -184,11 +182,6 @@ void AbstractNetworkJob::slotFinished()
     }
 }
 
-quint64 AbstractNetworkJob::duration()
-{
-    return _duration;
-}
-
 QString AbstractNetworkJob::responseTimestamp()
 {
     return _responseTimestamp;
@@ -204,8 +197,6 @@ AbstractNetworkJob::~AbstractNetworkJob()
 void AbstractNetworkJob::start()
 {
     _timer.start();
-    _durationTimer.start();
-    _duration = 0;
 
     qDebug() << "!!!" << metaObject()->className() << "created for" << account()->url() << "querying" << path();
 }

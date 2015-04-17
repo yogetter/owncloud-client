@@ -67,7 +67,6 @@ public:
     bool ignoreCredentialFailure() const { return _ignoreCredentialFailure; }
 
     QString responseTimestamp();
-    quint64 duration();
 
 public slots:
     void setTimeout(qint64 msec);
@@ -91,8 +90,6 @@ protected:
     int maxRedirects() const { return 10; }
     virtual bool finished() = 0;
     QString       _responseTimestamp;
-    QElapsedTimer _durationTimer;
-    quint64       _duration;
 
     // Timeout workarounds (Because of PHP session locking)
     static bool preOc7WasDetected;

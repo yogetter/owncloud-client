@@ -826,7 +826,7 @@ void PropagateDownloadFileQNAM::slotGetFinished()
         // (If it was really empty by the server, the GETFileJob will have errored
         _item._etag = parseEtag(job->etag());
     }
-    _item._requestDuration = job->duration(); // duration of the download
+    _item._requestDuration = _stopWatch.addLapTime("Download"); // duration of the download
     _item._responseTimeStamp = job->responseTimestamp();
 
     _tmpFile.close();
