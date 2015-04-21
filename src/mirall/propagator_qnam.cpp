@@ -26,7 +26,7 @@
 #include <QNetworkAccessManager>
 #include <QFileInfo>
 #include <QDir>
-#include <QtConcurrent>
+#include <qtconcurrentrun.h>
 
 #include <cmath>
 
