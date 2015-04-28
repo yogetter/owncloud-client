@@ -138,7 +138,7 @@ void PropagateUploadFileQNAM::start()
         // Calculate the checksum in a different thread first.
         connect( &_watcher, SIGNAL(finished()),
                  this, SLOT(slotChecksumCalculated()));
-
+        bool haveFuture = true;
         if( transChecksum == checkSumMD5C ) {
             _item._checksum = checkSumMD5C;
             _item._checksum += ":";
@@ -156,6 +156,13 @@ void PropagateUploadFileQNAM::start()
             _watcher.setFuture(QtConcurrent::run(FileSystem::calcAdler32Worker, filePath));
         }
 #endif
+        else {
+            haveFuture = false;
+        }
+        // in case there is a wrong checksum header, let continue without
+        if( !haveFuture ) {
+            startUpload();
+        }
     }
 }
 
