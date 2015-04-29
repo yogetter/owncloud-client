@@ -59,21 +59,21 @@ SettingsDialog::SettingsDialog(ownCloudGui *gui, QWidget *parent) :
     _accountSettings = new AccountSettings(this);
     addAccount(tr("Account"), _accountSettings);
 
-    QIcon protocolIcon(QLatin1String(":/mirall/resources/activity.png"));
+    QIcon protocolIcon(QLatin1String(":/client/resources/activity.png"));
     QListWidgetItem *protocol= new QListWidgetItem(protocolIcon, tr("Activity"), _ui->labelWidget);
     protocol->setSizeHint(QSize(0, 32));
     _ui->labelWidget->addItem(protocol);
     _protocolWidget = new ProtocolWidget;
     _protocolIdx = _ui->stack->addWidget(_protocolWidget);
 
-    QIcon generalIcon(QLatin1String(":/mirall/resources/settings.png"));
+    QIcon generalIcon(QLatin1String(":/client/resources/settings.png"));
     QListWidgetItem *general = new QListWidgetItem(generalIcon, tr("General"), _ui->labelWidget);
     general->setSizeHint(QSize(0, 32));
     _ui->labelWidget->addItem(general);
     GeneralSettings *generalSettings = new GeneralSettings;
     _ui->stack->addWidget(generalSettings);
 
-    QIcon networkIcon(QLatin1String(":/mirall/resources/network.png"));
+    QIcon networkIcon(QLatin1String(":/client/resources/network.png"));
     QListWidgetItem *network = new QListWidgetItem(networkIcon, tr("Network"), _ui->labelWidget);
     network->setSizeHint(QSize(0, 32));
     _ui->labelWidget->addItem(network);

@@ -66,7 +66,7 @@ SettingsDialogMac::SettingsDialogMac(ownCloudGui *gui, QWidget *parent)
     QIcon icon = Theme::instance()->syncStateIcon(SyncResult::Undefined, true);
     _accountIdx = addPreferencesPanel(icon, tr("Account"), _accountSettings);
 
-    QIcon protocolIcon(QLatin1String(":/mirall/resources/activity.png"));
+    QIcon protocolIcon(QLatin1String(":/client/resources/activity.png"));
     _protocolWidget = new ProtocolWidget;
     _protocolIdx = addPreferencesPanel(protocolIcon, tr("Activity"), _protocolWidget);
 
