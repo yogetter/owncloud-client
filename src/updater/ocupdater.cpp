@@ -146,7 +146,6 @@ void OCUpdater::slotVersionInfoArrived()
     _timer->stop();
     QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
     if( reply->error() != QNetworkReply::NoError ) {
-        qDebug() << "Failed to reach version check url: " << reply->errorString();
         return;
     }
 
