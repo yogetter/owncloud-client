@@ -82,11 +82,7 @@ Updater *Updater::create()
 {
     QUrl updateBaseUrl(QString::fromLocal8Bit(qgetenv("OCC_UPDATE_URL")));
     if (updateBaseUrl.isEmpty()) {
-        // check the theme for an update url overwrite
-        updateBaseUrl = Theme::instance()->updateCheckUrl();
-        if( updateBaseUrl.isEmpty() ){
-            updateBaseUrl = QUrl(QLatin1String(APPLICATION_UPDATE_URL));
-        }
+        updateBaseUrl = QUrl(QLatin1String(APPLICATION_UPDATE_URL));
     }
     updateBaseUrl = addQueryParams(updateBaseUrl);
 #if defined(Q_OS_MAC) && defined(HAVE_SPARKLE)
