@@ -186,6 +186,31 @@ void NSISUpdater::slotWriteFile()
     }
 }
 
+void NSISUpdater::slotCheckForRedirect()
+{
+    QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
+    QUrl currentUrl = reply->url();
+    QUrl relativeRedirectUrl = reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
+    QUrl redirectUrl = currentUrl.resolved(relativeRedirectUrl);
+    if (!redirectUrl.isEmpty()) {
+        qDebug() << Q_FUNC_INFO << "URL received in redirect is empty. Aborting download!";
+        setDownloadState(DownloadFailed);
+        reply->abort();
+        return;
+    } else if (redirectUrl != currentUrl) {
+        qDebug() << Q_FUNC_INFO << "Infinite redirect detected, aborting download!";
+        setDownloadState(DownloadFailed);
+        reply->abort();
+        return;
+    } else if (currentUrl.scheme() == "https") {
+        qDebug() << Q_FUNC_INFO << "Redirection URL is not HTTPS, aborting download!";
+        setDownloadState(DownloadFailed);
+        reply->abort();
+        startDownload(redirectUrl);
+    }
+
+}
+
 void NSISUpdater::slotDownloadFinished()
 {
     QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
@@ -203,6 +228,18 @@ void NSISUpdater::slotDownloadFinished()
     QSettings settings(cfg.configFile(), QSettings::IniFormat);
     settings.setValue(updateTargetVersionC, updateInfo().version());
     settings.setValue(updateAvailableC, _targetFile);
+}
+
+void NSISUpdater::startDownload(const QUrl &url)
+{
+    QNetworkReply *reply = qnam()->get(QNetworkRequest(url));
+    connect(reply, SIGNAL(metaDataChanged()), SLOT(slotCheckForRedirect()));
+    connect(reply, SIGNAL(readyRead()), SLOT(slotWriteFile()));
+    connect(reply, SIGNAL(finished()), SLOT(slotDownloadFinished()));
+    setDownloadState(Downloading);
+    _file.reset(new QTemporaryFile);
+    _file->setAutoRemove(true);
+    _file->open();
 }
 
 void NSISUpdater::versionInfoArrived(const UpdateInfo &info)
@@ -230,13 +267,7 @@ void NSISUpdater::versionInfoArrived(const UpdateInfo &info)
             if (QFile(_targetFile).exists()) {
                 setDownloadState(DownloadComplete);
             } else {
-                QNetworkReply *reply = qnam()->get(QNetworkRequest(QUrl(url)));
-                connect(reply, SIGNAL(readyRead()), SLOT(slotWriteFile()));
-                connect(reply, SIGNAL(finished()), SLOT(slotDownloadFinished()));
-                setDownloadState(Downloading);
-                _file.reset(new QTemporaryFile);
-                _file->setAutoRemove(true);
-                _file->open();
+                startDownload(QUrl(url));
             }
         }
     }

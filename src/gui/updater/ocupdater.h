@@ -84,8 +84,10 @@ private slots:
     void slotSetSeenVersion();
     void slotDownloadFinished();
     void slotWriteFile();
+    void slotCheckForRedirect();
 private:
     NSISUpdater::UpdateState updateStateOnStart();
+    void startDownload(const QUrl &url);
     void showDialog(const UpdateInfo &info);
     void versionInfoArrived(const UpdateInfo &info) Q_DECL_OVERRIDE;
     QScopedPointer<QTemporaryFile> _file;
