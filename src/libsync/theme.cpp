@@ -236,11 +236,6 @@ bool Theme::systrayUseMonoIcons() const
     return _mono;
 }
 
-QString Theme::updateCheckUrl() const
-{
-    return QLatin1String("https://updates.owncloud.com/client/");
-}
-
 QString Theme::transmissionChecksum() const
 {
     return QString::null; // No transmission by default.

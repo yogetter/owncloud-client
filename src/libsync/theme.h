@@ -185,11 +185,6 @@ public:
     bool systrayUseMonoIcons() const;
 
     /**
-     * @brief Where to check for new Updates.
-     */
-    virtual QString updateCheckUrl() const;
-
-    /**
      * When true, the setup wizard will show the selective sync dialog by default and default
      * to nothing selected
      */
