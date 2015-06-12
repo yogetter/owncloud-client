@@ -33,7 +33,8 @@ class OCUpdater : public QObject, public Updater
 {
     Q_OBJECT
 public:
-    enum DownloadState { Unknown = 0, CheckingServer, UpToDate,
+    enum DownloadState { Unknown = 0, CheckingServer,
+                         UpdateInfoFailed, UpToDate,
                          Downloading, DownloadComplete,
                          DownloadFailed, DownloadTimedOut,
                          UpdateOnlyAvailableThroughSystem };

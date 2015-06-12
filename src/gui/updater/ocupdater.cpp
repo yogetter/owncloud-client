@@ -80,6 +80,8 @@ QString OCUpdater::statusString() const
         return tr("Version %1 available. Restart application to start the update.").arg(updateVersion);
     case DownloadFailed:
         return tr("Could not download update. Please click <a href='%1'>here</a> to download the update manually.").arg(_updateInfo.web());
+    case UpdateInfoFailed:
+        // fall through
     case DownloadTimedOut:
         return tr("Could not check for new updates.");
     case UpdateOnlyAvailableThroughSystem:
@@ -147,6 +149,7 @@ void OCUpdater::slotVersionInfoArrived()
     _timer->stop();
     QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
     if( reply->error() != QNetworkReply::NoError ) {
+        setDownloadState(UpdateInfoFailed);
         qDebug() << "Failed to reach version check url: " << reply->errorString();
         return;
     }
