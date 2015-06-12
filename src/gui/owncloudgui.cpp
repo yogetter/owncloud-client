@@ -221,9 +221,13 @@ void ownCloudGui::slotComputeOverallSyncStatus()
             _tray->setToolTip(tr("Please sign in"));
             return;
         }
-        if (!a->isConnectedOrTemporarilyUnavailable()) {
+        if (!a->isConnected() ) { // OrTemporarilyUnavailable()) {
             _tray->setIcon(Theme::instance()->folderOfflineIcon(true));
-            _tray->setToolTip(tr("Disconnected from server"));
+            if( a->state() == AccountState::State::ServiceUnavailable ) {
+                _tray->setToolTip("The server is currently in maintenance.");
+            } else {
+                _tray->setToolTip(tr("Disconnected from server"));
+            }
             return;
         }
     }

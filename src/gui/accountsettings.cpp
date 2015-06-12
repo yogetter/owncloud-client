@@ -264,7 +264,15 @@ void AccountSettings::folderToModelItem( QStandardItem *item, Folder *f, bool ac
     item->setData( f->remotePath(),        FolderStatusDelegate::FolderSecondPathRole );
     item->setData( f->alias(),             FolderStatusDelegate::FolderAliasRole );
     item->setData( f->syncPaused(),        FolderStatusDelegate::FolderSyncPaused );
-    item->setData( accountConnected,       FolderStatusDelegate::FolderAccountConnected );
+
+    // set this accountConnected flag to false if the account is in maintenance.
+    // that makes the status showing the correct sync icon, but disabled (greyed out).
+    bool accConnected = accountConnected;
+    if( f->accountState() && f->accountState()->state() == AccountState::State::ServiceUnavailable ) {
+        accConnected = false;
+    }
+    item->setData( accConnected,       FolderStatusDelegate::FolderAccountConnected );
+
     SyncResult res = f->syncResult();
     SyncResult::Status status = res.status();
 
