@@ -387,6 +387,7 @@ void Account::slotHandleSslErrors(QNetworkReply *reply , QList<QSslError> errors
     if( _treatSslErrorsAsFailure ) {
         // User decided once not to trust. Honor this decision.
         qDebug() << out << "Certs not trusted by user decision, returning.";
+        reply->abort();
         return;
     }
 
@@ -407,7 +408,9 @@ void Account::slotHandleSslErrors(QNetworkReply *reply , QList<QSslError> errors
         // certificate changes.
         reply->ignoreSslErrors(errors);
     } else {
+        qDebug() << out << "Certs won't be trusted by user decision, returning.";
         _treatSslErrorsAsFailure = true;
+        reply->abort();
         return;
     }
 }
