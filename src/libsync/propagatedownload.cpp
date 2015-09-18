@@ -75,7 +75,7 @@ GETFileJob::GETFileJob(AccountPtr account, const QUrl& url, QFile *device,
 
 : AbstractNetworkJob(account, url.toEncoded(), parent),
   _device(device), _headers(headers), _expectedEtagForResume(expectedEtagForResume)
-, _resumeStart(resumeStart), _errorStatus(SyncFileItem::NoStatus)/*, _directDownloadUrl(url)*/
+, _resumeStart(resumeStart), _errorStatus(SyncFileItem::NoStatus), _directDownloadUrl(url)
 , _bandwidthLimited(false), _bandwidthChoked(false), _bandwidthQuota(0), _bandwidthManager(0)
 , _hasEmittedFinishedSignal(false), _lastModified()
 {
@@ -367,24 +367,24 @@ void PropagateDownloadFileQNAM::start()
         }
     }
 
-//    if (_item._directDownloadUrl.isEmpty()) {
+    if (_item._directDownloadUrl.isEmpty()) {
         // Normal job, download from oC instance
         _job = new GETFileJob(_propagator->account(),
                             _propagator->_remoteFolder + _item._file,
                             &_tmpFile, headers, expectedEtagForResume, startSize);
-//     } else {
-//         // We were provided a direct URL, use that one
-//         qDebug() << Q_FUNC_INFO << "directDownloadUrl given for " << _item._file << _item._directDownloadUrl;
-//
-//         if (!_item._directDownloadCookies.isEmpty()) {
-//             headers["Cookie"] = _item._directDownloadCookies.toUtf8();
-//         }
-//
-//         QUrl url = QUrl::fromUserInput(_item._directDownloadUrl);
-//         _job = new GETFileJob(_propagator->account(),
-//                               url,
-//                               &_tmpFile, headers, expectedEtagForResume, startSize);
-//     }
+    } else {
+        // We were provided a direct URL, use that one
+        qDebug() << Q_FUNC_INFO << "directDownloadUrl given for " << _item._file << _item._directDownloadUrl;
+
+        if (!_item._directDownloadCookies.isEmpty()) {
+            headers["Cookie"] = _item._directDownloadCookies.toUtf8();
+        }
+
+        QUrl url = QUrl::fromUserInput(_item._directDownloadUrl);
+        _job = new GETFileJob(_propagator->account(),
+                              url,
+                              &_tmpFile, headers, expectedEtagForResume, startSize);
+    }
     _job->setBandwidthManager(&_propagator->_bandwidthManager);
     connect(_job, SIGNAL(finishedSignal()), this, SLOT(slotGetFinished()));
     connect(_job, SIGNAL(downloadProgress(qint64,qint64)), this, SLOT(slotDownloadProgress(qint64,qint64)));
