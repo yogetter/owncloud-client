@@ -119,6 +119,7 @@ ENDIF()
 
 IF( NOT WIN32 AND NOT APPLE )
 set(client_SRCS ${client_SRCS} folderwatcher_linux.cpp)
+set(client_SRCS ${client_SRCS} watcheshelper_linux.cpp)
 ENDIF()
 IF( WIN32 )
 set(client_SRCS ${client_SRCS} folderwatcher_win.cpp)

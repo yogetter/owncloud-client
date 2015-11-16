@@ -17,6 +17,7 @@
 
 #include "folder.h"
 #include "folderwatcher_linux.h"
+#include "watcheshelper_linux.h"
 
 #include <cerrno>
 #include <QDebug>
@@ -31,6 +32,8 @@ FolderWatcherPrivate::FolderWatcherPrivate(FolderWatcher *p, const QString& path
       _parent(p),
       _folder(path)
 {
+    connect(this, SIGNAL(outOfWatches()), watchesHelper(), SLOT(slotTryIncreaseWatches()));
+    connect(watchesHelper(), SIGNAL(watchesIncreasingSuccess()), SLOT(slotRetryFailedWatches()));
     _fd = inotify_init();
     if (_fd != -1) {
         _socket.reset( new QSocketNotifier(_fd, QSocketNotifier::Read) );
@@ -81,10 +84,21 @@ void FolderWatcherPrivate::inotifyRegisterPath(const QString& path)
                                    IN_CREATE |IN_DELETE | IN_DELETE_SELF |
                                    IN_MOVE_SELF |IN_UNMOUNT |IN_ONLYDIR |
                                    IN_DONT_FOLLOW );
-        if( wd > -1 ) {
+        if ( wd > -1 ) {
             _watches.insert(wd, path);
-         }
+        } else {
+            _failedWatches.append(path);
+        }
     }
+}
+
+WatchesHelper* FolderWatcherPrivate::watchesHelper()
+{
+    static WatchesHelper *helper = 0;
+    if (!helper) {
+        helper = new WatchesHelper;
+    }
+    return helper;
 }
 
 void FolderWatcherPrivate::slotAddFolderRecursive(const QString &path)
@@ -121,6 +135,25 @@ void FolderWatcherPrivate::slotAddFolderRecursive(const QString &path)
 
     if (subdirs >0) {
         qDebug() << "    `-> and" << subdirs << "subdirectories";
+    }
+
+    if (!_failedWatches.isEmpty()) {
+        emit outOfWatches();
+    }
+}
+
+void FolderWatcherPrivate::slotRetryFailedWatches()
+{
+    QStringList failedWatches = _failedWatches;
+    _failedWatches.clear();
+    qDebug() << Q_FUNC_INFO << "Folder" << _folder
+             << ": trying to add watches for" << failedWatches;
+    foreach (const QString path, failedWatches) {
+        inotifyRegisterPath(path);
+    }
+
+    if (!_failedWatches.isEmpty()) {
+        // something is really fishy, display error
     }
 }
 
@@ -209,4 +242,4 @@ void FolderWatcherPrivate::removePath(const QString& path)
     }
 }
 
-} // ns mirall
+} // nc OCC

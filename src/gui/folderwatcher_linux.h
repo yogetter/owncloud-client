@@ -25,6 +25,8 @@
 namespace OCC
 {
 
+class WatchesHelper;
+
 /**
  * @brief Linux (inotify) API implementation of FolderWatcher
  * @ingroup gui
@@ -43,20 +45,26 @@ public:
 protected slots:
     void slotReceivedNotification(int fd);
     void slotAddFolderRecursive(const QString &path);
+    void slotRetryFailedWatches();
+
+signals:
+    void outOfWatches();
 
 protected:
     bool findFoldersBelow( const QDir& dir, QStringList& fullList );
     void inotifyRegisterPath(const QString& path);
+    WatchesHelper* watchesHelper();
 
 private:
     FolderWatcher *_parent;
 
     QString _folder;
     QHash <int, QString> _watches;
+    QStringList _failedWatches;
     QScopedPointer<QSocketNotifier> _socket;
     int _fd;
 };
 
 }
 
-#endif
+#endif //MIRALL_FOLDERWATCHER_LINUX_H
