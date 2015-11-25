@@ -120,6 +120,8 @@ private slots:
             SyncJournalFileRecord record;
             record._path = "foo-nochecksum";
             record._remotePerm = "744";
+            record._modtime = QDateTime::currentDateTimeUtc();
+
             QVERIFY(_db.setFileRecord(record));
 
             SyncJournalFileRecord storedRecord = _db.getFileRecord("foo-nochecksum");
