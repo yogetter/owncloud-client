@@ -148,14 +148,22 @@ void ownCloudGui::setupOverlayIcons()
 // This should rather be in application.... or rather in ConfigFile?
 void ownCloudGui::slotOpenSettingsDialog()
 {
+    bool IpinConfig = true;
+    auto list = AccountManager::instance()->accounts();
     // if account is set up, start the configuration wizard.
-    if( !AccountManager::instance()->accounts().isEmpty() ) {
-        if (_settingsDialog.isNull() || QApplication::activeWindow() != _settingsDialog) {
-            slotShowSettings();
-        } else {
-            _settingsDialog->close();
+    if( !list.isEmpty() ) {
+        QString AccountCheck = list.first().data()->account()->displayName();
+        if(AccountCheck.at(0) !='@'){
+            IpinConfig = false;
+            if (_settingsDialog.isNull() || QApplication::activeWindow() != _settingsDialog) {
+                slotShowSettings();
+            } else {
+                _settingsDialog->close();
+            }
         }
-    } else {
+    }
+    // if account is set up, start the configuration wizard.
+    if(IpinConfig){
         qDebug() << "No configured folders yet, starting setup wizard";
         OwncloudSetupWizard::runWizard(qApp, SLOT(slotownCloudWizardDone(int)));
     }
