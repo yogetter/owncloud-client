@@ -252,6 +252,14 @@ void Application::slotSystemOnlineConfigurationChanged(QNetworkConfiguration cnf
 void Application::slotCheckConnection()
 {
     auto list = AccountManager::instance()->accounts();
+    if(!list.isEmpty()){
+        //Check if config file have set url but no account
+        QString AccountCheck = list.first().data()->account()->displayName();
+        //If config file have url but no user clear accountList
+        if(AccountCheck.at(0) =='@'){
+            list.clear();
+        }
+    }
     foreach (const auto &accountState , list) {
         AccountState::State state = accountState->state();
 
