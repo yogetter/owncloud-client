@@ -78,11 +78,24 @@ void OwncloudSetupWizard::runWizard(QObject* obj, const char* amember, QWidget *
 
 void OwncloudSetupWizard::startWizard()
 {
+    //Load user from config and get url
+    auto list = AccountManager::instance()->accounts();
     AccountPtr account = AccountManager::createAccount();
-    account->setCredentials(CredentialsFactory::create("dummy"));
-    account->setUrl(Theme::instance()->overrideServerUrl());
     _ocWizard->setAccount(account);
-    _ocWizard->setOCUrl(account->url().toString());
+    if(list.isEmpty()){
+        account->setUrl(Theme::instance()->overrideServerUrl());
+        _ocWizard->setOCUrl(account->url().toString());
+    }
+    else{
+        auto manager = AccountManager::instance();
+        AccountState* accountStatetmp = manager->accounts().first().data();
+        AccountPtr accountTmp = accountStatetmp->account();
+        _ocWizard->setOCUrl(accountTmp->url().toString());
+        //Delete empty account from config file
+        manager->deleteAccount(accountStatetmp);
+        manager->save();
+    }
+    account->setCredentials(CredentialsFactory::create("dummy"));
 
     _remoteFolder = Theme::instance()->defaultServerFolder();
     // remoteFolder may be empty, which means /
