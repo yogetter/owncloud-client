@@ -266,6 +266,7 @@ void OwncloudSetupWizard::slotAuthError()
         _ocWizard->back();
     }
     _ocWizard->displayError(errorMsg, _ocWizard->currentId() == WizardCommon::Page_ServerSetup && checkDowngradeAdvised(reply));
+    _ocWizard->account()->clearCookieJar();
 }
 
 bool OwncloudSetupWizard::checkDowngradeAdvised(QNetworkReply* reply)
