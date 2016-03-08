@@ -110,10 +110,6 @@ void GeneralSettings::loadMiscSettings()
 
 void GeneralSettings::slotUpdateInfo()
 {
-    ConfigFile cfgFile;
-    if(cfgFile.skipUpdateCheck()) {
-        _ui->updatesGroupBox->setTitle("Version");
-    }
     if (OCUpdater *updater = dynamic_cast<OCUpdater*>(Updater::instance())) {
         connect(updater, SIGNAL(downloadStateChanged()), SLOT(slotUpdateInfo()), Qt::UniqueConnection);
         connect(_ui->restartButton, SIGNAL(clicked()), updater, SLOT(slotStartInstaller()), Qt::UniqueConnection);

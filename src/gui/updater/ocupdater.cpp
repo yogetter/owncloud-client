@@ -135,8 +135,7 @@ void OCUpdater::backgroundCheckForUpdate()
 QString OCUpdater::statusString() const
 {
     QString updateVersion = _updateInfo.version();
-    QString disable_update = "Your version is "+clientVersion();
-    QString default_display = disable_update + ". No updates available. Your installation is at the latest version.";
+    QString clientVer = clientVersion();
 
     switch (downloadState()) {
     case Downloading:
@@ -153,11 +152,11 @@ QString OCUpdater::statusString() const
         return tr("Checking update server...");
     case Unknown:
        // return tr("Update status is unknown: Did not check for new updates.");
-          return tr(disable_update.toStdString().c_str());
+        return tr("Your version is %1 .").arg(clientVer);
     case UpToDate:
         // fall through
     default:
-        return tr(default_display.toStdString().c_str());
+        return tr("Your version is %1 .").arg(clientVer);
     }
 }
 
