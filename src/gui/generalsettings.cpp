@@ -47,6 +47,7 @@ GeneralSettings::GeneralSettings(QWidget *parent) :
     connect(_ui->autostartCheckBox, SIGNAL(toggled(bool)), SLOT(slotToggleLaunchOnStartup(bool)));
 
     // setup about section
+    /*
     QString about = Theme::instance()->about();
     if (about.isEmpty()) {
         _ui->aboutGroupBox->hide();
@@ -56,7 +57,7 @@ GeneralSettings::GeneralSettings(QWidget *parent) :
         _ui->aboutLabel->setWordWrap(true);
         _ui->aboutLabel->setOpenExternalLinks(true);
     }
-
+   */
     loadMiscSettings();
     slotUpdateInfo();
 
@@ -109,6 +110,10 @@ void GeneralSettings::loadMiscSettings()
 
 void GeneralSettings::slotUpdateInfo()
 {
+    ConfigFile cfgFile;
+    if(cfgFile.skipUpdateCheck()) {
+        _ui->updatesGroupBox->setTitle("Version");
+    }
     if (OCUpdater *updater = dynamic_cast<OCUpdater*>(Updater::instance())) {
         connect(updater, SIGNAL(downloadStateChanged()), SLOT(slotUpdateInfo()), Qt::UniqueConnection);
         connect(_ui->restartButton, SIGNAL(clicked()), updater, SLOT(slotStartInstaller()), Qt::UniqueConnection);
