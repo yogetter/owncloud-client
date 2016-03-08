@@ -113,12 +113,15 @@ QPixmap ownCloudTheme::wizardHeaderLogo() const
 
 QString ownCloudTheme::appName() const
 {
-    return QLatin1String("ownCloud");
+    //return QLatin1String("ownCloud");
+    return QString("儲存應用服務");
 }
 
 QString ownCloudTheme::appNameGUI() const
 {
-    return QLatin1String("ownCloud");
+    //return QLatin1String("ownCloud");
+    return QString("儲存應用服務");
+
 }
 
 

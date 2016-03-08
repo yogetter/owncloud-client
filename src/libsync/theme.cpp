@@ -90,7 +90,7 @@ QString Theme::statusHeaderText( SyncResult::Status status ) const
 
 QString Theme::appNameGUI() const
 {
-    return QLatin1String(APPLICATION_NAME);
+    return QString(APPLICATION_NAME);
 }
 
 QString Theme::appName() const
