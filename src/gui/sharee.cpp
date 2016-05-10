@@ -13,6 +13,7 @@
 
 #include "sharee.h"
 #include "ocsshareejob.h"
+#include <QCoreApplication>
 
 namespace OCC {
 
@@ -27,12 +28,12 @@ Sharee::Sharee(const QString shareWith,
 
 QString Sharee::format() const
 {
-    QString formatted = _displayName;
+    QString formatted = _displayName + " ";
 
     if (_type == Type::Group) {
-        formatted += QLatin1String(" (group)");
+        formatted += QCoreApplication::translate("sharee","(group)");
     } else if (_type == Type::Federated) {
-        formatted += QLatin1String(" (remote)");
+        formatted += QCoreApplication::translate("sharee","(remote)");
     }
 
     return formatted;

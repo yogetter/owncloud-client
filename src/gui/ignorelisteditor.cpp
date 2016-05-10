@@ -60,6 +60,12 @@ IgnoreListEditor::IgnoreListEditor(QWidget *parent) :
     ui->tableWidget->verticalHeader()->setVisible(false);
 
     ui->syncHiddenFilesCheckBox->setChecked( !FolderMan::instance()->ignoreHiddenFiles() );
+    QPushButton *okButton =
+            ui->buttonBox->button(QDialogButtonBox::Ok);
+    QPushButton *cancelButton =
+            ui->buttonBox->button(QDialogButtonBox::Cancel);
+    okButton->setText(tr("Ok"));
+    cancelButton->setText(tr("Cancel"));
 }
 
 IgnoreListEditor::~IgnoreListEditor()

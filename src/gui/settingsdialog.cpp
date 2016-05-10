@@ -119,6 +119,7 @@ SettingsDialog::SettingsDialog(ownCloudGui *gui, QWidget *parent) :
     QTimer::singleShot(1, this, SLOT(showFirstPage()));
 
     QPushButton *closeButton = _ui->buttonBox->button(QDialogButtonBox::Close);
+    closeButton->setText(tr("Close"));
     connect(closeButton, SIGNAL(clicked()), SLOT(accept()));
 
     QAction *showLogWindow = new QAction(this);

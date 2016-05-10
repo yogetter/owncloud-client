@@ -25,6 +25,12 @@ AddCertificateDialog::AddCertificateDialog(QWidget *parent) :
 {
     ui->setupUi(this);
     ui->labelErrorCertif->setText("");
+    QPushButton *okButton =
+            ui->buttonBox->button(QDialogButtonBox::Ok);
+    QPushButton *cancelButton =
+            ui->buttonBox->button(QDialogButtonBox::Cancel);
+    okButton->setText(tr("Ok"));
+    cancelButton->setText(tr("Cancel"));
 }
 
 AddCertificateDialog::~AddCertificateDialog()

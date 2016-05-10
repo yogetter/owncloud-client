@@ -45,6 +45,7 @@ ShareDialog::ShareDialog(AccountPtr account, const QString &sharePath, const QSt
     _ui->setupUi(this);
 
     QPushButton *closeButton = _ui->buttonBox->button(QDialogButtonBox::Close);
+    closeButton->setText(tr("Close"));
     connect(closeButton, SIGNAL(clicked()), this, SLOT(close()));
 
     // Because people press enter in the dialog and we don't want to close for that
