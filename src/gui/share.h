@@ -40,7 +40,8 @@ public:
         TypeUser   = Sharee::User,
         TypeGroup  = Sharee::Group,
         TypeLink   = 3,
-        TypeRemote = Sharee::Federated
+        TypeRemote = Sharee::Federated,
+        TypeSharing_group = Sharee::Sharing_groups
     };
 
     /**

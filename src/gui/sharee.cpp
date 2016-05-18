@@ -13,7 +13,7 @@
 
 #include "sharee.h"
 #include "ocsshareejob.h"
-
+#include <QCoreApplication>
 namespace OCC {
 
 Sharee::Sharee(const QString shareWith,
@@ -27,12 +27,14 @@ Sharee::Sharee(const QString shareWith,
 
 QString Sharee::format() const
 {
-    QString formatted = _displayName;
+    QString formatted = _displayName + " ";
 
     if (_type == Type::Group) {
-        formatted += QLatin1String(" (group)");
+        formatted += QCoreApplication::translate("sharee","(group)");
     } else if (_type == Type::Federated) {
-        formatted += QLatin1String(" (remote)");
+        formatted += QCoreApplication::translate("sharee","(remote)");
+    } else if (_type == Type::Sharing_groups){
+        formatted += QCoreApplication::translate("sharee","(sharing_groups)");
     }
 
     return formatted;
@@ -89,6 +91,10 @@ void ShareeModel::shareesFetched(const QVariantMap &reply)
         foreach(auto remote, remotes) {
             newSharees.append(parseSharee(remote.toMap()));
         }
+        auto sharing_groups = exact.value("sharing_groups").toList();
+        foreach(auto sharing_group, sharing_groups){
+            newSharees.append(parseSharee(sharing_group.toMap()));
+        }
     }
 
     {
@@ -107,6 +113,12 @@ void ShareeModel::shareesFetched(const QVariantMap &reply)
         auto remotes = data.value("remotes").toList();
         foreach(auto remote, remotes) {
             newSharees.append(parseSharee(remote.toMap()));
+        }
+    }
+    {
+        auto sharing_groups = data.value("sharing_groups").toList();
+        foreach(auto sharing_group, sharing_groups){
+            newSharees.append(parseSharee(sharing_group.toMap()));
         }
     }
 
