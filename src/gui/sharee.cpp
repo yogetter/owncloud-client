@@ -27,12 +27,12 @@ Sharee::Sharee(const QString shareWith,
 
 QString Sharee::format() const
 {
-    QString formatted = _displayName + " ";
+    QString formatted = _displayName;
 
     if (_type == Type::Group) {
-        formatted += QCoreApplication::translate("sharee","(group)");
+        formatted += QLatin1String(" (group)");
     } else if (_type == Type::Federated) {
-        formatted += QCoreApplication::translate("sharee","(remote)");
+        formatted += QLatin1String(" (remote)");
     } else if (_type == Type::Sharing_groups){
         formatted += QCoreApplication::translate("sharee","(sharing_groups)");
     }
